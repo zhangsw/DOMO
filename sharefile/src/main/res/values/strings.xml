@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">DistributedSharedMemory</string>
+    <string name="hello">Hello World, ShareFileActivity!</string>
+</resources>

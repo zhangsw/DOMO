@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/DSM.iml" filepath="$PROJECT_DIR$/DSM.iml" />
+      <module fileurl="file://$PROJECT_DIR$/DistributedSharedMemory.iml" filepath="$PROJECT_DIR$/DistributedSharedMemory.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sharefile/sharefile.iml" filepath="$PROJECT_DIR$/sharefile/sharefile.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sharefiletest/sharefiletest.iml" filepath="$PROJECT_DIR$/sharefiletest/sharefiletest.iml" />
+    </modules>
+  </component>
+</project>
+
