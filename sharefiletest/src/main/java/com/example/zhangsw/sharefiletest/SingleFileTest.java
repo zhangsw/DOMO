@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.example.zhangsw.sharefile.Log.DebugLog;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -108,6 +110,7 @@ public class SingleFileTest extends Activity {
                 FileWriter fw = new FileWriter(file,true);
                 fw.write("abcdefghijklmn\n");
                 fw.close();
+                DebugLog.d("modify file");
             } catch (IOException e) {
                 e.printStackTrace();
             }
