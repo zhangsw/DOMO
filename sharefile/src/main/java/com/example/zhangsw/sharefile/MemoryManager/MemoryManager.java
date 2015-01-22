@@ -11,6 +11,7 @@ import com.example.zhangsw.sharefile.FileSystem.FileMetaData;
 import com.example.zhangsw.sharefile.FileSystem.MyFileObserver;
 import com.example.zhangsw.sharefile.FileSystem.VectorClock;
 import com.example.zhangsw.sharefile.FileSystem.VersionManager;
+import com.example.zhangsw.sharefile.Log.DebugLog;
 import com.example.zhangsw.sharefile.LogLine.LogLine;
 import com.example.zhangsw.sharefile.Storage.StorageOperator;
 import com.example.zhangsw.sharefile.Util.FileConstant;
@@ -850,6 +851,7 @@ public class MemoryManager implements IMemoryManager{
 			case FileConstant.SENDFILEMESSAGE:{											//发送文件数据,其实是发送VectorClock
 				
 				System.out.println("-----sendfilemessage------relativeFilePath is " + mo.getRelativeFilepath() + ",target is " + mo.getTarget());
+                DebugLog.d(mo.getRelativeFilepath() + ":send file message");
 				sendFileVersion(mo.getTarget(),mo.getRelativeFilepath(),vectorClock);
 				
 				//sendFile(mo.getTarget(),mo.getFilepath(),mo.getRelativeFilepath());

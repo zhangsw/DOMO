@@ -21,6 +21,7 @@ import java.util.TimerTask;
 public class SingleFileTest extends Activity {
 
     private String filePath;
+    private String logFilePath;
     private int writePercent;
     private EditText et;
 
