@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.example.zhangsw.sharefile.Log.DebugLog;
+import com.example.zhangsw.sharefile.Util.FileConstant;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -22,8 +23,8 @@ import java.util.TimerTask;
 
 public class SingleFileTest extends Activity {
 
-    private String filePath;
-    private String logFilePath;
+    private String filePath = FileConstant.DEFAULTSHAREPATH + "/singleFileTest.txt";
+   // private String logFilePath;
     private int writePercent;
     private EditText et;
 
@@ -51,9 +52,13 @@ public class SingleFileTest extends Activity {
         setContentView(R.layout.activity_single_file_test);
 
         et = (EditText)findViewById(R.id.single_test_editText);
-        Button btStart = (Button) findViewById(R.id.single_file_start_button);
-        Button btStop = (Button) findViewById(R.id.single_file_stop_button);
-
+        File file = new File(filePath);
+        file.deleteOnExit();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -81,6 +86,7 @@ public class SingleFileTest extends Activity {
 
 
     public void startBtOnClick(View view){
+
         writePercent = Integer.parseInt(et.getText().toString());
         TimerTask task = new TimerTask() {
             @Override

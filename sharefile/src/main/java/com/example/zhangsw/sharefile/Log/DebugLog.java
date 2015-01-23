@@ -30,7 +30,8 @@ public class DebugLog{
     }
 
     public static boolean isDebuggable() {
-        return BuildConfig.DEBUG;
+       // return BuildConfig.DEBUG;
+        return true;
     }
 
     private static String createLog( String log ) {
