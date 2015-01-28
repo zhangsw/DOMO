@@ -23,12 +23,11 @@ import junit.framework.Assert;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -851,7 +850,8 @@ public class MemoryManager implements IMemoryManager{
 			case FileConstant.SENDFILEMESSAGE:{											//发送文件数据,其实是发送VectorClock
 				
 				System.out.println("-----sendfilemessage------relativeFilePath is " + mo.getRelativeFilepath() + ",target is " + mo.getTarget());
-                DebugLog.d(mo.getRelativeFilepath() + ":send file message");
+                Date date = new Date();
+                DebugLog.d(mo.getRelativeFilepath() + ":send file message:"+FileUtil.getTimeFromLong(date.getTime()));
 				sendFileVersion(mo.getTarget(),mo.getRelativeFilepath(),vectorClock);
 				
 				//sendFile(mo.getTarget(),mo.getFilepath(),mo.getRelativeFilepath());

@@ -12,10 +12,12 @@ import android.widget.EditText;
 
 import com.example.zhangsw.sharefile.Log.DebugLog;
 import com.example.zhangsw.sharefile.Util.FileConstant;
+import com.example.zhangsw.sharefile.Util.FileUtil;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,6 +28,7 @@ public class SingleFileTest extends Activity {
     private String filePath = FileConstant.DEFAULTSHAREPATH + "/singleFileTest.txt";
    // private String logFilePath;
     private int writePercent;
+    private long modifyCount = 1;
     private EditText et;
 
     private final Timer timer = new Timer();
@@ -86,18 +89,19 @@ public class SingleFileTest extends Activity {
 
 
     public void startBtOnClick(View view){
-
-        writePercent = Integer.parseInt(et.getText().toString());
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                // TODO Auto-generated method stub
-                Message message = new Message();
-                message.what = 1;
-                handler.sendMessage(message);
-            }
-        };
-        timer.schedule(task,1000,3000);
+        if(et.getText().length() > 0) {
+            writePercent = Integer.parseInt(et.getText().toString());
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    // TODO Auto-generated method stub
+                    Message message = new Message();
+                    message.what = 1;
+                    handler.sendMessage(message);
+                }
+            };
+            timer.schedule(task, 1000, 5000);
+        }
     }
 
     public void stopBtOnClick(View view){
@@ -116,7 +120,9 @@ public class SingleFileTest extends Activity {
                 FileWriter fw = new FileWriter(file,true);
                 fw.write("abcdefghijklmn\n");
                 fw.close();
-                DebugLog.d("modify file");
+                Date date = new Date();
+                DebugLog.d("modify file:" + FileUtil.getTimeFromLong(date.getTime()));
+                modifyCount++;
             } catch (IOException e) {
                 e.printStackTrace();
             }
