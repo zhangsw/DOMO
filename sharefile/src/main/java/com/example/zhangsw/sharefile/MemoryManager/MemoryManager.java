@@ -455,7 +455,12 @@ public class MemoryManager implements IMemoryManager{
 	public boolean receiveMakeDir(String target, String absolutePath){
 		System.out.println("enter consistency receiveMakeDir----path is "+ absolutePath);
 		File file = new File(absolutePath);
-		if(!file.exists()) return file.mkdir();
+		if(!file.exists()){
+            file.mkdir();
+            fileManager.createEmptyFileNode(absolutePath,"");
+            fileManager.startObserverFile(absolutePath);
+            return true;
+        }
 		else return false;
 	}
 	

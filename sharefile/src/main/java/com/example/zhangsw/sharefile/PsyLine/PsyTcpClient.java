@@ -44,6 +44,9 @@ public class PsyTcpClient{
 			executorServiceRe.execute(res);*/
             return true;
         }
+        else{
+            System.out.println("----PsyTcpClient----device existed");
+        }
         return false;
     }
 }

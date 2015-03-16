@@ -117,7 +117,6 @@ public class Responser implements Runnable{
                                         e.printStackTrace();
                                     }
                                 }
-
                                 callBack.receiveFileData(ip,fileMetaData,file);
                             }break;
 

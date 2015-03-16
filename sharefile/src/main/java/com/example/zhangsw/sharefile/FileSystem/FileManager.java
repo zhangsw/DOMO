@@ -493,7 +493,7 @@ public class FileManager implements IFileManager {
             HashMap<String,Handler> targets = o.getTargetsAll();
             for (Entry<String, Handler> entry : targets.entrySet()) {
                 System.out.println("----FileManager----dispenseMessage----target is " + entry.getKey());
-                Handler handler = (Handler) entry.getValue();
+                Handler handler = entry.getValue();
                 handler.sendMessage(Message.obtain(handler, result, s));
             }
             return true;
