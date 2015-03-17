@@ -112,7 +112,7 @@ public class PsyLine extends Observable implements FileTransfer,FileTransferCall
     public boolean sendFile(String ip,final FileMetaData metaData,final String absolutePath){
         int index = getIndexByTargetID(ip);
         if(index != -1){
-            ((SocketIO)socketList.get(index)).sendFileData(metaData, absolutePath);
+            (socketList.get(index)).sendFileData(metaData, absolutePath);
             return true;
         }
         return false;
@@ -268,7 +268,7 @@ public class PsyLine extends Observable implements FileTransfer,FileTransferCall
         // TODO Auto-generated method stub
         int index = getIndexByTargetID(ip);
         if(index != -1){
-            SocketIO sio = (SocketIO)socketList.get(index);
+            SocketIO sio = socketList.get(index);
             sio.close();
             logline.receiveDisconnect(ip);
             socketList.remove(index);

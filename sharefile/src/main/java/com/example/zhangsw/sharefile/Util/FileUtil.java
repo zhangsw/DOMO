@@ -72,4 +72,9 @@ public class FileUtil {
         String t =  df.format(date);
         return t.replace(":", "-");
     }
+
+    public static String getCurrentTime(){
+        SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        return df.format(new Date());
+    }
 }

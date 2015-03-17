@@ -11,12 +11,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
@@ -97,18 +96,6 @@ public class SocketIO implements Runnable{
     }
 
     /**
-     * 发送文件的metaData
-     */
-    public synchronized void sendFileMetaData(FileMetaData fileMetaData){
-        try {
-            dos = new DataOutputStream(socket.getOutputStream());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * 发送文件更新的通知（是收到来自别的设备的更新）
      */
     public synchronized void sendFileUpdateInform(FileMetaData fileMetaData){
@@ -127,7 +114,7 @@ public class SocketIO implements Runnable{
         try {
             Assert.assertNotNull(msg.obj1);
             oos.writeUTF(FileTransferHeader.sendFileUpdateHeader());
-            oos.writeUnshared((FileMetaData)msg.obj1);
+            oos.writeUnshared(msg.obj1);
             oos.flush();
             oos.reset();
         } catch (IOException e) {
@@ -139,9 +126,6 @@ public class SocketIO implements Runnable{
 
     /**
      * 发送文件数据,先发送文件的metaData，然后发送data
-     * @param fileVersionNum	文件的版本号
-     * @param fileID	文件的id
-     * @param relativePath	文件的相对路径
      * @param absolutePath 文件的绝对路径
      */
     public synchronized void sendFileData(FileMetaData metaData,String absolutePath){
@@ -163,24 +147,28 @@ public class SocketIO implements Runnable{
             Assert.assertNotNull(msg.obj1);
             Assert.assertNotNull(msg.sArg1);
             File file = new File(msg.sArg1);
-            DataInputStream disfile = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-            Assert.assertNotNull("File inputStream for " + ((FileMetaData)msg.obj1).getFileID() + " is null",disfile);
+            //DataInputStream disfile = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+            FileInputStream fis = new FileInputStream(file);
+           // Assert.assertNotNull("File inputStream for " + ((FileMetaData)msg.obj1).getFileID() + " is null",disfile);
             //发送文件前的处理
             oos.writeUTF(FileTransferHeader.sendFileDataHeader(file.length()));
             //先发送文件的metaData
-            oos.writeUnshared((FileMetaData)msg.obj1);
+            oos.writeUnshared(msg.obj1);
             oos.flush();
             oos.reset();
             //发送文件的数据
-            int bufferSize = 8192;
+            int bufferSize = 65536;
             byte[] buf = new byte[bufferSize];
             int read = 0;
-            while((read = disfile.read(buf)) > -1){
-                //System.out.println("send " + read);
+            //OutputStream socketOS = socket.getOutputStream();
+            while((read = fis.read(buf)) > -1){
+                //socketOS.write(buf,0,read);
                 oos.write(buf,0,read);
                 oos.flush();
             }
-            disfile.close();
+           // disfile.close();
+            fis.close();;
+           // socketOS.close();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -196,7 +184,7 @@ public class SocketIO implements Runnable{
     /**
      *发送文件的vectorClock
      * @param vectorClock
-     * @param fileID
+     * @param
      * @param relativePath
      */
     public synchronized void sendFileVersion(VectorClock vectorClock,FileMetaData metaData,String relativePath,String tag){
@@ -224,8 +212,8 @@ public class SocketIO implements Runnable{
             Assert.assertNotNull(msg.sArg1);
             Assert.assertNotNull(msg.sArg2);
             oos.writeUTF(FileTransferHeader.sendFileVersionHeader(msg.sArg1, msg.sArg2));
-            oos.writeUnshared((VectorClock)(msg.obj1));
-            oos.writeUnshared((FileMetaData)(msg.obj2));
+            oos.writeUnshared(msg.obj1);
+            oos.writeUnshared(msg.obj2);
             oos.flush();
             oos.reset();
             System.out.println("socketIO has sended vectorClock,relativePath is" + msg.sArg1);
@@ -344,6 +332,7 @@ public class SocketIO implements Runnable{
             // TODO Auto-generated catch block
             e.printStackTrace();
             System.out.println("----SocketIO----send heart beat failure");
+            reconnect();
         }
     }
 

@@ -58,6 +58,7 @@ public class MyFileObserver{
         if(FileOperateHelper.fileExist(path)){			//文件存在，才进行监控
             observer = new SDFileObserver(path,globalMessageHandler);
             observer.startWatching();
+            System.out.println("----MyFileObserver----observer start watching");
         }
         initializeVersionManager(localDeviceId,path,mTargets);
     }
@@ -200,7 +201,7 @@ public class MyFileObserver{
                 observer.startWatching();
             }
             else{
-                System.out.println("----MyFileObserver----start watching----");
+                System.out.println("----MyFileObserver----start watching，path is："+path);
                 //observer.stopWatching();
                 observer.startWatching();
             }

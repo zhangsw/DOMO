@@ -177,7 +177,7 @@ public class ShareInfo{
                 }break;
 
                 case IEventTranslate.FILEDELETE:				//文件删除
-                case IEventTranslate.FILEMOVEFROM:{				//文件移入
+                case IEventTranslate.FILEMOVEFROM:{				//文件移出
                     if(conRule.deleteFile(obj)){
                         String relativePath = obj.substring(FileConstant.DEFAULTSHAREPATH.length());
                         deleteMessage(target,FileConstant.DELETEFILEMESSAGE,relativePath,handlerFa);

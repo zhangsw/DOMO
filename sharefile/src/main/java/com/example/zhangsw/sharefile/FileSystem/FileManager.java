@@ -192,7 +192,7 @@ public class FileManager implements IFileManager {
 
     /**
      * 文件是旧版本，有新版的文件，将旧版本文件删除.
-     * @param ob
+     * @param
      */
 
     public void deleteOldFile(String path){
@@ -243,19 +243,19 @@ public class FileManager implements IFileManager {
 
     private MyFileObserver registerObserverNoRecursion(String localDeviceId,String absolutePath,String fatherPath){
         MyFileObserver observer = mObservers.get(absolutePath);
-        Assert.assertNull("observer exists when first initialize the observer tree,check it",observer);
-
-        if(fatherPath != null)
-            observer = new MyFileObserver(absolutePath,localDeviceId,globalMsgHandler,this,mObservers.get(fatherPath));
-        else
-            observer = new MyFileObserver(absolutePath,localDeviceId,globalMsgHandler,this,null);
-        mObservers.put(absolutePath, observer);
+        if(observer == null){
+            if(fatherPath != null)
+                observer = new MyFileObserver(absolutePath,localDeviceId,globalMsgHandler,this,mObservers.get(fatherPath));
+            else
+                observer = new MyFileObserver(absolutePath,localDeviceId,globalMsgHandler,this,null);
+            mObservers.put(absolutePath, observer);
+        }
         return observer;
     }
 
     /**
      * 获取文件的VectorClock
-     * @param fileID 文件的id
+     * @param
      * @return
      */
     public VectorClock getVectorClock(String path){
@@ -294,7 +294,7 @@ public class FileManager implements IFileManager {
 
     /**
      * 注册observer
-     * @param path:
+     * @param
      * @param target:
      * */
     public MyFileObserver registerObserver(String target,String absolutePath,Handler handler,String fatherPath){
@@ -339,7 +339,6 @@ public class FileManager implements IFileManager {
         // TODO Auto-generated method stub
         MyFileObserver observer = mObservers.get(path);
         if(observer != null){
-            observer.stopWatching();
             moveObserver(observer);
         }
     }
@@ -390,6 +389,8 @@ public class FileManager implements IFileManager {
         }
     }
 
+
+
     private void moveObserver(String path){			//对路径为path的observer，将其从监控中移除
         MyFileObserver observer = mObservers.get(path);
         moveObserver(observer);
@@ -404,6 +405,7 @@ public class FileManager implements IFileManager {
             if(father != null){
                 father.deleteChildObserver(observer);
             }
+            observer.stopWatching();
             mObservers.remove(observer.getPath());
         }
     }
@@ -458,6 +460,15 @@ public class FileManager implements IFileManager {
         registerObserverNoRecursion(localDeviceId,path,getFatherPath(path));
     }
 
+    public void makeDir(File file){
+        if(!file.exists()) {
+            createEmptyFileNode(file.getAbsolutePath(), "");
+            file.mkdir();
+            startObserverFile(file.getAbsolutePath());
+        }
+
+    }
+
     private void addDirectory(String path,MyFileObserver fatherObserver){
         registerObserver(localDeviceId,path,fatherObserver.getPath());
 		/*
@@ -509,8 +520,9 @@ public class FileManager implements IFileManager {
             Iterator<Entry<String, Handler>> iter1 = targets1.entrySet().iterator();
             for (Entry<String, Handler> entry : targets2.entrySet()) {
                 String target = entry.getKey();
-                Handler handler = (Handler) entry.getValue();
+                Handler handler = entry.getValue();
                 if (!targets1.containsKey(target)) {
+                    //从未监控的目录转入监控的目录
                     if (result == IEventTranslate.FILERENAMEORMOVE) {
                         handler.sendMessage(Message.obtain(handler, IEventTranslate.FILEMOVETO, s2));
                         registerObserver(target, s2, handler, getFatherPath(s2));
@@ -519,11 +531,15 @@ public class FileManager implements IFileManager {
                         registerObserver(target, s2, handler, getFatherPath(s2));
                     }
                 }
+                else{
+                    //从监控的目录转入另一个监控的目录
+                }
+
             }
             while(iter1.hasNext()){
-                Map.Entry<String,Handler> entry =(Map.Entry<String,Handler>)iter1.next();
+                Map.Entry<String,Handler> entry =iter1.next();
                 String target = entry.getKey();
-                Handler handler = (Handler)entry.getValue();
+                Handler handler = entry.getValue();
                 if(targets2.containsKey(target)){
                     handler.sendMessage(Message.obtain(handler, result, s1 + "$/@@/$" + s2));
                 }
@@ -753,22 +769,27 @@ public class FileManager implements IFileManager {
             switch(result){
                 case IEventTranslate.FILEMODIFIED:{				//文件被修改，将消息发送到共享该文件的对象.
                     //System.out.println(path + " has been modified");
+                    System.out.println("----FileManager----FileModified");
                     handleFileModifiedMsg(path,result);
                 }break;
 
                 case IEventTranslate.FILEMOVETO:{			//有新文件移动到了受监控的文件夹中，需要发送文件并为该文件添加observer
+                    System.out.println("----FileManager----FileMoveto");
                     handleFileMoveToMsg(path,result);
                 }break;
 
                 case IEventTranslate.DIRCREATE:{				//文件夹创建
+                    System.out.println("----FileManager----DirCreate");
                     handleCreateDirMsg(path,result);
                 }break;
 
                 case IEventTranslate.FILEMOVEFROM:{			//文件从监测目录中移走，且目标文件夹不在监测范围内
+                    System.out.println("----FileManager----FileMoveFrom");
                     handleFileMoveFromMsg(path,result);
                 }break;
 
                 case IEventTranslate.FILEDELETE:{							//文件删除
+                    System.out.println("----FileManager----FileDelete");
                     handleDeleteFileMsg(path,result);
                 }break;
 
@@ -789,6 +810,7 @@ public class FileManager implements IFileManager {
                 }break;
 
                 case IEventTranslate.DIRMOVETO:{			//文件夹移入监控目录
+                    System.out.print("----FileManager----DirMoveTo");
                     handleDirMoveToMsg(path,result);
                 }break;
 

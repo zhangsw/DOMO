@@ -25,7 +25,7 @@ public class Responser implements Runnable{
     private String line;
     private DataOutputStream dos;
     private String savePath;
-    private int bufferSize = 8192;
+    private int bufferSize = 65536;
     private byte[] buf;
     private FileTransferCallBack callBack;
     private ObjectInputStream ois;
@@ -82,37 +82,44 @@ public class Responser implements Runnable{
                                 System.out.println("size is " + size + "\n" + "relativeFilePath is " + fileMetaData.getRelativePath());
                                 System.out.println("savePath is "+ Path);
                                 buf = new byte[bufferSize];
-                                try{
-                                    dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(Path)));
-                                }catch(IOException e){
-                                    e.printStackTrace();
-                                }
-                                while(true){
+                                FileOutputStream fos = new FileOutputStream(Path);
+                               // InputStream socketIS = socket.getInputStream();
+//                                try{
+//
+//                                    ///dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(Path)));
+//                                }catch(IOException e){
+//                                    e.printStackTrace();
+//                                }
+                                while(true) {
                                     int read = 0;
-                                    if (ois != null){
-                                        try{
-                                            if(passedLength >= size) break;
-                                            read = ois.read(buf);
-                                        }catch(IOException e){
+
+                                    if (ois != null) {
+                                        try {
+                                            if (passedLength >= size) break;
+                                             read = ois.read(buf);
+                                           // read = socketIS.read(buf);
+                                        } catch (IOException e) {
                                             e.printStackTrace();
                                         }
 
-                                        if(read != -1){
-                                            passedLength +=read;
+                                        if (read != -1) {
+                                            passedLength += read;
 
-                                            try{
-                                                dos.write(buf,0,read);
-                                                dos.flush();
-                                            }catch(IOException e){
+                                            try {
+                                                //dos.write(buf,0,read);
+                                                //dos.flush();
+                                                fos.write(buf, 0, read);
+                                            } catch (IOException e) {
                                                 e.printStackTrace();
                                             }
                                         }
                                     }
                                 }
-                                if(dos != null){
+                                //socketIS.close();
+                                if(fos != null){
                                     try{
-                                        dos.close();
-                                        System.out.println("dos has been closed");
+                                        fos.close();
+                                        System.out.println("fos has been closed");
                                     }catch(IOException e){
                                         e.printStackTrace();
                                     }
@@ -155,6 +162,7 @@ public class Responser implements Runnable{
 
                             case FileConstant.FILEVERSION:{
                                 try {
+                                    System.out.println("receive file version------");
                                     VectorClock versionMap = (VectorClock)ois.readUnshared();
                                     FileMetaData metaData = (FileMetaData)ois.readUnshared();
                                     Assert.assertNotNull("----Responser----Error,versionMap is null",versionMap);

@@ -84,7 +84,7 @@ public class ConflictDetect {
         int compareResult = localVectorClock.compareTo(remoteVectorClock);
         switch(compareResult){
             case VectorClock.EQUAL:{
-                System.out.println("----ConflictDetect----detect----both know the version");
+               // System.out.println("----ConflictDetect----detect----both know the version");
                 result = ConflictManager.BOTHKNOW;
             }break;
             case VectorClock.GREATER:{
@@ -108,7 +108,7 @@ public class ConflictDetect {
                 }
             }break;
             default:{
-                System.out.println("----ConflictDetect----detect----default situation");
+               // System.out.println("----ConflictDetect----detect----default situation");
             }
         }
         return result;

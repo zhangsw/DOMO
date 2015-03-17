@@ -128,11 +128,11 @@ public class MemoryManager implements IMemoryManager{
 	
 	}
 	
-	private void sendFileVectorClock(String target,MyFileObserver ob,String tag){
-		if(ob != null){
-			logLine.sendFileVectorClock(target, ob.getFileMetaData().getFileID(), ob.getVectorClock(), ob.getFileMetaData().getRelativePath(), tag);
-		}
-	}
+//	private void sendFileVectorClock(String target,MyFileObserver ob,String tag){
+//		if(ob != null){
+//			logLine.sendFileVectorClock(target, ob.getFileMetaData().getFileID(), ob.getVectorClock(), ob.getFileMetaData().getRelativePath(), tag);
+//		}
+//	}
 	
 	/**
 	 * 发送文件的VectorClock
@@ -244,6 +244,7 @@ public class MemoryManager implements IMemoryManager{
 		}
 		else{	//本地不存在该文件的文件结点
 			//TODO
+            System.out.println("----MemoryManager----not exist file node,tag is:" + tag);
 			if(tag.equals(vectorClock)){
 				//创建新的文件结点
 				boolean success = fileManager.createEmptyFileNode(path, remoteMetaData.getFileID());
@@ -300,7 +301,7 @@ public class MemoryManager implements IMemoryManager{
 	public void receiveFileData(String target,FileMetaData fileMetaData,File file){
 		//由于收到的文件是保存在默认的cache中的，我们需要将它移动到它理应所在的位置，即relativePath下。
 		//
-		System.out.println("recevice metaData,relativePath is " + fileMetaData.getRelativePath());
+		System.out.println("recevice file,relativePath is " + fileMetaData.getRelativePath()+":"+FileUtil.getCurrentTime());
 		String relativePath = fileMetaData.getRelativePath();
 		file.setLastModified(fileMetaData.getModifiedTime());
 		if(fileManager.fileObserverExist(defaultRootPath + relativePath)){
@@ -453,12 +454,11 @@ public class MemoryManager implements IMemoryManager{
 	}
 	
 	public boolean receiveMakeDir(String target, String absolutePath){
-		System.out.println("enter consistency receiveMakeDir----path is "+ absolutePath);
+		System.out.println("enter MemoryManager receiveMakeDir----path is "+ absolutePath);
 		File file = new File(absolutePath);
 		if(!file.exists()){
-            file.mkdir();
-            fileManager.createEmptyFileNode(absolutePath,"");
-            fileManager.startObserverFile(absolutePath);
+            //TODO
+            fileManager.makeDir(file);
             return true;
         }
 		else return false;
@@ -514,7 +514,10 @@ public class MemoryManager implements IMemoryManager{
                 if (aChild.isDirectory()) sendDir(target, ab, re);
                 else {
                     System.out.println("send dir --- send list files: " + aChild.getAbsolutePath());
-                    sendFile(target, ab, re);
+                    //发送的是version，但其实由于发送文件夹，里面的文件肯定是要发送过去的
+                   //TODO
+                    sendFileVersion(target,re,vectorClock);
+                   // sendFile(target, ab, re);
                 }
             }
 		}
@@ -526,6 +529,7 @@ public class MemoryManager implements IMemoryManager{
 	
 	
 	public void fetchFile(String target,String relativePath){
+        System.out.println("fetch file:"+relativePath+":"+FileUtil.getCurrentTime());
 		logLine.fetchFile(target,relativePath);
 	}
 	
@@ -734,7 +738,7 @@ public class MemoryManager implements IMemoryManager{
 		int index = getIndexByName(target);
 		if(index != -1){
 			//存在该设备，进行断连
-			System.out.println("before enter logline's disconnect");
+			System.out.println("----MemoryManager----before enter logline's disconnect");
 			if(logLine.disconnect(target)){
 				//TODO
 				System.out.println("logline has disconnected");
@@ -757,8 +761,9 @@ public class MemoryManager implements IMemoryManager{
 		// TODO Auto-generated method stub
 		int index = getIndexByName(targetName);
 		if(index != -1){
+            System.out.println("----MemoryManager----receive Disconnect");
 			saveShareInformation(targetName);
-			ShareInfo s = (ShareInfo)(shareInfList.get(index));
+			ShareInfo s = shareInfList.get(index);
 			fileManager.withdrowObserver(targetName, s.getSharedFilePath());
 			shareInfList.remove(index);
 		}
