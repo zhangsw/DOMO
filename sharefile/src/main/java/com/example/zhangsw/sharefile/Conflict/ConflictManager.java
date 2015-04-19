@@ -2,7 +2,7 @@ package com.example.zhangsw.sharefile.Conflict;
 
 import com.example.zhangsw.sharefile.FileSystem.FileManager;
 import com.example.zhangsw.sharefile.FileSystem.FileMetaData;
-import com.example.zhangsw.sharefile.FileSystem.MyFileObserver;
+import com.example.zhangsw.sharefile.FileSystem.DSMFileNode;
 import com.example.zhangsw.sharefile.FileSystem.VectorClock;
 import com.example.zhangsw.sharefile.MemoryManager.IMemoryManager;
 
@@ -86,7 +86,7 @@ public class ConflictManager implements IResoluteOperator{
         return conflictFiles.containsKey(path);
 	}
 	
-	public void addConflictFile(MyFileObserver ob,String path){
+	public void addConflictFile(DSMFileNode ob,String path){
 		if(conflictFileNodeExist(path)){
 			conflictFiles.get(path).add(ob);
 		}

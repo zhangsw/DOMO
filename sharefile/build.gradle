@@ -1,11 +1,11 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 21
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        applicationId "com.example.zhangsw.sharefile"
+       // applicationId "com.example.zhangsw.sharefile"
         minSdkVersion 7
         targetSdkVersion 21
         versionCode 1

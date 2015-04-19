@@ -167,7 +167,7 @@ public class SocketIO implements Runnable{
                 oos.flush();
             }
            // disfile.close();
-            fis.close();;
+            fis.close();
            // socketOS.close();
         } catch (IOException e) {
             // TODO Auto-generated catch block

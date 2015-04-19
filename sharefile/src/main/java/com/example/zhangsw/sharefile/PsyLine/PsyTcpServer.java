@@ -37,7 +37,6 @@ public class PsyTcpServer{
             public void run() {
                 // TODO Auto-generated method stub
                 super.run();
-                System.out.println("server has been started");
                 while(tag){
                     try {
                         // 接收客户连接,只要客户进行了连接,就会触发accept()从而建立连接

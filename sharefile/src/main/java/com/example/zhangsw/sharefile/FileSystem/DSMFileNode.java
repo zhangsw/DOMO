@@ -9,9 +9,7 @@ import com.example.zhangsw.sharefile.Util.FileUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -19,12 +17,12 @@ import java.util.Map.Entry;
  * @author zhangsw
  *
  */
-public class MyFileObserver{
+public class DSMFileNode {
     private SDFileObserver observer;
     private String path;
     private HashMap <String,Handler> mTargets;
-    private ArrayList<MyFileObserver> lChildObserver;
-    private MyFileObserver fatherObserver;
+    private ArrayList<DSMFileNode> lChildNode;
+    private DSMFileNode fatherNode;
     private IFileManager iFOManager;
 
     private Handler globalMessageHandler;
@@ -40,47 +38,47 @@ public class MyFileObserver{
      * @param localDeviceId		本地设备的id
      * @param globalMessageHandler		全局消息处理handler
      * @param i	文件管理接口
-     * @param fatherObserver	父节点
+     * @param fatherNode	父节点
      */
-    public MyFileObserver(String path,String localDeviceId,Handler globalMessageHandler,IFileManager i,MyFileObserver fatherObserver){
+    public DSMFileNode(String path, String localDeviceId, Handler globalMessageHandler, IFileManager i,DSMFileNode fatherNode){
         this.path = path;
-        if(fatherObserver != null && fatherObserver.hasTarget()){
-            mTargets = new HashMap<>(fatherObserver.getTargetsAll());
+        if(fatherNode != null && fatherNode.hasTarget()){
+            mTargets = new HashMap<>(fatherNode.getTargetsAll());
         }
         else{
             mTargets = new HashMap<>();
         }
-        lChildObserver = new ArrayList<>();
+        lChildNode = new ArrayList<>();
         iFOManager = i;
-        this.fatherObserver = fatherObserver;
+        this.fatherNode = fatherNode;
         this.globalMessageHandler = globalMessageHandler;
         //添加对文件的监控
         if(FileOperateHelper.fileExist(path)){			//文件存在，才进行监控
             observer = new SDFileObserver(path,globalMessageHandler);
             observer.startWatching();
-            System.out.println("----MyFileObserver----observer start watching");
+            System.out.println("----DSMFileNode----observer start watching");
         }
         initializeVersionManager(localDeviceId,path,mTargets);
     }
 
-    public MyFileObserver(String path,String target,Handler handler,Handler globalMessageHandler,IFileManager i,MyFileObserver fatherObserver){
+    public DSMFileNode(String path, String target, Handler handler, Handler globalMessageHandler, IFileManager i,DSMFileNode fatherNode){
         this.path = path;
         mTargets = new HashMap<>();
-        lChildObserver = new ArrayList<>();
+        lChildNode = new ArrayList<>();
         mTargets.put(target, handler);
         iFOManager = i;
-        this.fatherObserver = fatherObserver;
+        this.fatherNode = fatherNode;
         this.globalMessageHandler = globalMessageHandler;
         //observer = new SDFileObserver(path,handler);
         initializeVersionManager();
     }
 
-    public MyFileObserver(String path,Handler globalMessageHandler,IFileManager i,MyFileObserver fatherObserver){
+    public DSMFileNode(String path, Handler globalMessageHandler, IFileManager i,DSMFileNode fatherNode){
         this.path = path;
         this.globalMessageHandler = globalMessageHandler;
-        this.fatherObserver = fatherObserver;
-        lChildObserver = new ArrayList<>();
-        mTargets = new HashMap<>(fatherObserver.getTargetsAll());
+        this.fatherNode = fatherNode;
+        lChildNode = new ArrayList<>();
+        mTargets = new HashMap<>(fatherNode.getTargetsAll());
         iFOManager = i;
 
         initializeVersionManager();
@@ -201,7 +199,7 @@ public class MyFileObserver{
                 observer.startWatching();
             }
             else{
-                System.out.println("----MyFileObserver----start watching，path is："+path);
+                System.out.println("----DSMFileNode----start watching，path is："+path);
                 //observer.stopWatching();
                 observer.startWatching();
             }
@@ -210,7 +208,7 @@ public class MyFileObserver{
 
 
     public void stopWatching(){
-        for (MyFileObserver o : lChildObserver) {
+        for (DSMFileNode o : lChildNode) {
             o.stopWatching();
         }
         if(observer != null){
@@ -227,7 +225,7 @@ public class MyFileObserver{
         //更新metaData中的relativePath
         versionManager.getFileMetaData().setRelativePath(path.substring(FileConstant.DEFAULTSHAREPATH.length()));
 
-        for (MyFileObserver o : lChildObserver) {
+        for (DSMFileNode o : lChildNode) {
             //System.out.println("has child");
             String name = FileUtil.getFileNameFromPath(o.getPath());
             o.modifyPath(path + "/" + name);
@@ -241,23 +239,23 @@ public class MyFileObserver{
     }
 
     public boolean hasFather(){
-        return fatherObserver != null;
+        return fatherNode != null;
     }
 
-    public void setFather(MyFileObserver observer){
-        fatherObserver = observer;
+    public void setFather(DSMFileNode observer){
+        fatherNode = observer;
     }
 
-    public MyFileObserver getFather(){
-        return fatherObserver;
+    public DSMFileNode getFather(){
+        return fatherNode;
     }
 
     public boolean hasChild(){
-        return !lChildObserver.isEmpty();
+        return !lChildNode.isEmpty();
     }
 
-    public ArrayList<MyFileObserver> getChildAll(){
-        return lChildObserver;
+    public ArrayList<DSMFileNode> getChildAll(){
+        return lChildNode;
     }
 
     public HashMap<String,Handler> getTargetsAll(){
@@ -282,19 +280,19 @@ public class MyFileObserver{
     }
 
 
-    public void addChildObserver(MyFileObserver childObserver){
-        for(MyFileObserver fileObserver:lChildObserver)
+    public void addChildObserver(DSMFileNode childObserver){
+        for(DSMFileNode fileObserver: lChildNode)
             if(fileObserver.getPath().equals(childObserver.getPath())) return;
-        lChildObserver.add(childObserver);
-        //System.out.println("----MyFileObserver----" + path + "add a child observer:" + childObserver.getPath());
+        lChildNode.add(childObserver);
+        //System.out.println("----DSMFileNode----" + path + "add a child observer:" + childObserver.getPath());
     }
 
     public void deleteChildObserver(String path){
 
     }
 
-    public void deleteChildObserver(MyFileObserver childObserver){
-        lChildObserver.remove(childObserver);
+    public void deleteChildObserver(DSMFileNode childObserver){
+        lChildNode.remove(childObserver);
     }
 
     public boolean addTarget(String target,Handler handler){
@@ -304,7 +302,7 @@ public class MyFileObserver{
             mTargets.put(target, handler);
             //向VectorClock中添加设备
             versionManager.addDevice(target);
-            for (MyFileObserver o : lChildObserver) {
+            for (DSMFileNode o : lChildNode) {
                 o.addTarget(target, handler);
             }
             return true;
@@ -321,7 +319,7 @@ public class MyFileObserver{
 		// TODO Auto-generated method stub
 		if(o == this) return true;
 		if(o == null) return false;
-		else if(path.equals(((MyFileObserver)o).getPath())) return true;
+		else if(path.equals(((DSMFileNode)o).getPath())) return true;
 		else return false;
 	}
 	*/

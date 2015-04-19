@@ -1,11 +1,11 @@
 package com.example.zhangsw.sharefile.Conflict;
 
 
-import com.example.zhangsw.sharefile.FileSystem.MyFileObserver;
+import com.example.zhangsw.sharefile.FileSystem.DSMFileNode;
 
 public interface IResoluteOperator {
 	
-	public void addConflictFile(MyFileObserver ob, String path);
+	public void addConflictFile(DSMFileNode ob, String path);
 	
 	public void addConflictNode(String path);
 		

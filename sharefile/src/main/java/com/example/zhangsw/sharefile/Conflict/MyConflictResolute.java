@@ -27,11 +27,11 @@ public class MyConflictResolute extends ConflictResolute{
 			String remoteDeviceId, String relativePath, IResoluteOperator iro) {
 		// TODO Auto-generated method stub
         //将冲突文件添加到conflictFile中
-		iro.addConflictFile(fileManager.getMyFileObserver(FileConstant.DEFAULTSHAREPATH + relativePath), FileConstant.DEFAULTSHAREPATH + relativePath);
+		iro.addConflictFile(fileManager.getDSMFileNode(FileConstant.DEFAULTSHAREPATH + relativePath), FileConstant.DEFAULTSHAREPATH + relativePath);
 
         //修改本地冲突文件名字，为"文件名 + 设备名 +修改日期"的形式
 		String fileName = FileOperateHelper.getFileName(relativePath);
-		long time = fileManager.getMyFileObserver(FileConstant.DEFAULTSHAREPATH + relativePath).getModifiedTime();
+		long time = fileManager.getDSMFileNode(FileConstant.DEFAULTSHAREPATH + relativePath).getModifiedTime();
 		String newFileName = fileRename(fileName,localDeviceId, FileUtil.getTimeFromLong(time));
 		String newRelativePath = relativePath.substring(0, relativePath.length()-fileName.length()) + newFileName;
 		//iro.renameLocalFile(fileID, relativePath,newRelativePath);
@@ -53,11 +53,11 @@ public class MyConflictResolute extends ConflictResolute{
 			String remoteDeviceId, String relativePath,
 			FileMetaData remoteMetaData, ConflictManager iro) {
 		// TODO Auto-generated method stub
-		iro.addConflictFile(fileManager.getMyFileObserver(FileConstant.DEFAULTSHAREPATH + relativePath), FileConstant.DEFAULTSHAREPATH + relativePath);
+		iro.addConflictFile(fileManager.getDSMFileNode(FileConstant.DEFAULTSHAREPATH + relativePath), FileConstant.DEFAULTSHAREPATH + relativePath);
 
         //修改本地冲突文件名字，为"文件名 + 设备名 +修改日期"的形式
         String fileName = FileOperateHelper.getFileName(relativePath);
-        long time = fileManager.getMyFileObserver(FileConstant.DEFAULTSHAREPATH + relativePath).getModifiedTime();
+        long time = fileManager.getDSMFileNode(FileConstant.DEFAULTSHAREPATH + relativePath).getModifiedTime();
         String newFileName = fileRename(fileName,localDeviceId,FileUtil.getTimeFromLong(time));
         String newRelativePath = relativePath.substring(0, relativePath.length()-fileName.length()) + newFileName;
         System.out.println("----MyConflictResolute----resoluteConfliction----newRelativePath is " + newRelativePath);
@@ -92,7 +92,7 @@ public class MyConflictResolute extends ConflictResolute{
         fileManager.modifyObserverPath(oldPath, path);
         fileManager.startObserverFile(path);
         //将该文件加入到冲突文件中
-        iro.addConflictFile(fileManager.getMyFileObserver(path), oldPath);
+        iro.addConflictFile(fileManager.getDSMFileNode(path), oldPath);
 		
 	}
 	

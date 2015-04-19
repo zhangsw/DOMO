@@ -1,6 +1,6 @@
 package com.example.zhangsw.sharefile.Conflict;
 
-import com.example.zhangsw.sharefile.FileSystem.MyFileObserver;
+import com.example.zhangsw.sharefile.FileSystem.DSMFileNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,18 +14,18 @@ import java.util.List;
 public class ConflictFileNode {
 
     private final String path;
-    private final List<MyFileObserver> conflictFile;
+    private final List<DSMFileNode> conflictFile;
 
     public ConflictFileNode(String path){
         this.path = path;
-        conflictFile = new ArrayList<MyFileObserver>();
+        conflictFile = new ArrayList<DSMFileNode>();
     }
 
     /**
      * 添加一个文件
      * @param ob
      */
-    public void add(MyFileObserver ob){
+    public void add(DSMFileNode ob){
         if(!fileExist(ob))
             conflictFile.add(ob);
     }
@@ -34,7 +34,7 @@ public class ConflictFileNode {
      * 删除一个文件
      * @param ob
      */
-    public void remove(MyFileObserver ob){
+    public void remove(DSMFileNode ob){
         int index = getIndex(ob);
         if(index >= 0) conflictFile.remove(index);
     }
@@ -55,19 +55,19 @@ public class ConflictFileNode {
         return conflictFile.size();
     }
 
-    public MyFileObserver getFileObserver(int index){
+    public DSMFileNode getFileObserver(int index){
         if((conflictFile.size() >= index) &&(index >= 0)){
             return conflictFile.get(index);
         }
         else return null;
     }
 
-    public MyFileObserver getLocalFileObserver(){
+    public DSMFileNode getLocalFileObserver(){
         return conflictFile.get(0);
     }
 
-    private boolean fileExist(MyFileObserver ob){
-        for(MyFileObserver fileObserver:conflictFile)
+    private boolean fileExist(DSMFileNode ob){
+        for(DSMFileNode fileObserver:conflictFile)
             if(fileObserver.getPath().equals(ob.getPath())) return true;
         return false;
     }
@@ -77,7 +77,7 @@ public class ConflictFileNode {
      * @param ob
      * @return
      */
-    private int getIndex(MyFileObserver ob){
+    private int getIndex(DSMFileNode ob){
         for(int i=0;i<conflictFile.size();i++){
             if(conflictFile.get(i).getPath().equals(ob.getPath()))
                 return i;

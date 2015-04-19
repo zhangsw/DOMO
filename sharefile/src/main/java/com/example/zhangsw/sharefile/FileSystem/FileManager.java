@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 import com.example.zhangsw.sharefile.FileMonitor.AndEventTranslate;
 import com.example.zhangsw.sharefile.FileMonitor.IEventTranslate;
@@ -21,7 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class FileManager implements IFileManager {
-    private HashMap<String,MyFileObserver> mObservers;
+    private HashMap<String,DSMFileNode> mFileNodes;
     private Handler globalMsgHandler;		//全局消息handler,来自各个observer
     private HandlerThread handlerThread;		//全局消息的thread，主要是用来提供looper的。
 
@@ -38,7 +39,7 @@ public class FileManager implements IFileManager {
      * @param localDeviceId	本地设备id
      */
     public FileManager(String defaultRootPath,String localDeviceId){
-        mObservers = new HashMap<>();
+        mFileNodes = new HashMap<>();
         handlerThread = new HandlerThread(handlerThreadName);
         handlerThread.start();		//启动thread
         globalMsgHandler = new GlobalMsgHandler(handlerThread.getLooper());
@@ -62,28 +63,28 @@ public class FileManager implements IFileManager {
      * @return
      */
     public boolean createEmptyFileNode(String path,String fileID){
-        if(path == null || mObservers.containsKey(path)) return false;
+        if(path == null || mFileNodes.containsKey(path)) return false;
         else{
             //获得父结点路径
             String fatherPath = getFatherPath(path);
-            MyFileObserver fatherObserver = mObservers.get(fatherPath);
+            DSMFileNode fatherObserver = mFileNodes.get(fatherPath);
             if(fatherObserver == null){
                 //不存在父结点
                 //先构建父节点
                 createEmptyFileNode(fatherPath,null);
-                fatherObserver = mObservers.get(fatherPath);
+                fatherObserver = mFileNodes.get(fatherPath);
             }
             //存在父结点
-            MyFileObserver m = new MyFileObserver(path,localDeviceId,globalMsgHandler,this,fatherObserver);
+            DSMFileNode m = new DSMFileNode(path,localDeviceId,globalMsgHandler,this,fatherObserver);
             fatherObserver.addChildObserver(m);
-            mObservers.put(path, m);
+            mFileNodes.put(path, m);
             //TODO 文件的id是否需要有待考证
             return true;
         }
     }
 
     public boolean fileObserverExist(String path){
-        return mObservers.containsKey(path);
+        return mFileNodes.containsKey(path);
     }
 
 
@@ -93,30 +94,30 @@ public class FileManager implements IFileManager {
      * @param metaData	文件的metaData
      */
     public boolean updateMetaData(String path,FileMetaData metaData){
-        if(mObservers.containsKey(path)){	//存在文件结点
-            mObservers.get(path).setFileMetaData(metaData);
+        if(mFileNodes.containsKey(path)){	//存在文件结点
+            mFileNodes.get(path).setFileMetaData(metaData);
             return true;
         }
         else return false;
     }
 
     public boolean updateVectorClock(String path,String deviceId,Integer versionNumber){
-        if(mObservers.containsKey(path)){	//存在文件结点
+        if(mFileNodes.containsKey(path)){	//存在文件结点
             //System.out.println("----FileManager----updateVectorClock:observer exists");
-            mObservers.get(path).updateVectorClock(deviceId, versionNumber);
+            mFileNodes.get(path).updateVectorClock(deviceId, versionNumber);
             return true;
         }else return false;
     }
 
     public boolean updateVectorClock(String path,VectorClock VectorClock){
-        if(mObservers.containsKey(path)){
-            mObservers.get(path).updateVectorClock(VectorClock);
+        if(mFileNodes.containsKey(path)){
+            mFileNodes.get(path).updateVectorClock(VectorClock);
             return true;
         }else return false;
     }
 
 
-    private void updateVersion(MyFileObserver ob,String deviceId){
+    private void updateVersion(DSMFileNode ob,String deviceId){
         ob.fileModified(deviceId);
 
         System.out.println(ob.getPath() + " has update its local version,version number is " + ob.getFileVersion());
@@ -164,8 +165,8 @@ public class FileManager implements IFileManager {
     }
 
     public void startObserverFile(String path){
-        if(mObservers.containsKey(path))
-            mObservers.get(path).startWatching();
+        if(mFileNodes.containsKey(path))
+            mFileNodes.get(path).startWatching();
     }
 
     public void setLocalDeviceId(String localDeviceId){
@@ -178,7 +179,7 @@ public class FileManager implements IFileManager {
      * 文件是旧版本，有新版的文件，将旧版本文件删除.
      * @param ob
      */
-    public void deleteOldFile(MyFileObserver ob) {
+    public void deleteOldFile(DSMFileNode ob) {
         // TODO Auto-generated method stub
         String path = ob.getPath();
         if(FileOperateHelper.fileExist(path)){
@@ -210,12 +211,12 @@ public class FileManager implements IFileManager {
         registerObserver(localDeviceId,path);
     }
 
-    private MyFileObserver registerObserver(String localDeviceId,String absolutePath){
+    private DSMFileNode registerObserver(String localDeviceId,String absolutePath){
         return registerObserver(localDeviceId,absolutePath, null);
     }
 
-    private MyFileObserver registerObserver(String localDeviceId,String absolutePath,String fatherPath){
-        MyFileObserver observer = mObservers.get(absolutePath);
+    private DSMFileNode registerObserver(String localDeviceId,String absolutePath,String fatherPath){
+        DSMFileNode observer = mFileNodes.get(absolutePath);
         if(observer != null){	//observer不为null，即已经存在监控的observer
             //TODO
             return observer;
@@ -224,13 +225,13 @@ public class FileManager implements IFileManager {
 
         if(fatherPath != null){
             //System.out.println("-----FileManager-----fatherPath is" + fatherPath);
-            MyFileObserver fatherObserver = mObservers.get(fatherPath);
-            observer = new MyFileObserver(absolutePath,localDeviceId,globalMsgHandler,this,fatherObserver);
+            DSMFileNode fatherObserver = mFileNodes.get(fatherPath);
+            observer = new DSMFileNode(absolutePath,localDeviceId,globalMsgHandler,this,fatherObserver);
             fatherObserver.addChildObserver(observer);
         }
         else
-            observer = new MyFileObserver(absolutePath,localDeviceId,globalMsgHandler,this,null);
-        mObservers.put(absolutePath, observer);
+            observer = new DSMFileNode(absolutePath,localDeviceId,globalMsgHandler,this,null);
+        mFileNodes.put(absolutePath, observer);
         if(FileOperateHelper.isDirectory(absolutePath)){
             //是文件夹，对子文件递归
             File []files = FileOperateHelper.subFiles(absolutePath);
@@ -241,14 +242,14 @@ public class FileManager implements IFileManager {
         return observer;
     }
 
-    private MyFileObserver registerObserverNoRecursion(String localDeviceId,String absolutePath,String fatherPath){
-        MyFileObserver observer = mObservers.get(absolutePath);
+    private DSMFileNode registerObserverNoRecursion(String localDeviceId,String absolutePath,String fatherPath){
+        DSMFileNode observer = mFileNodes.get(absolutePath);
         if(observer == null){
             if(fatherPath != null)
-                observer = new MyFileObserver(absolutePath,localDeviceId,globalMsgHandler,this,mObservers.get(fatherPath));
+                observer = new DSMFileNode(absolutePath,localDeviceId,globalMsgHandler,this,mFileNodes.get(fatherPath));
             else
-                observer = new MyFileObserver(absolutePath,localDeviceId,globalMsgHandler,this,null);
-            mObservers.put(absolutePath, observer);
+                observer = new DSMFileNode(absolutePath,localDeviceId,globalMsgHandler,this,null);
+            mFileNodes.put(absolutePath, observer);
         }
         return observer;
     }
@@ -259,20 +260,20 @@ public class FileManager implements IFileManager {
      * @return
      */
     public VectorClock getVectorClock(String path){
-        if(mObservers.containsKey(path))
-            return mObservers.get(path).getVectorClock();
+        if(mFileNodes.containsKey(path))
+            return mFileNodes.get(path).getVectorClock();
         else return null;
     }
 
     public int getLocalVersionNumber(String path){
-        if(mObservers.containsKey(path))
-            return mObservers.get(path).getVersionNumber(localDeviceId);
+        if(mFileNodes.containsKey(path))
+            return mFileNodes.get(path).getVersionNumber(localDeviceId);
         else return -1;
     }
 
     public FileMetaData getFileMetaData(String path){
-        if(mObservers.containsKey(path))
-            return mObservers.get(path).getFileMetaData();
+        if(mFileNodes.containsKey(path))
+            return mFileNodes.get(path).getFileMetaData();
         else return null;
     }
 
@@ -288,7 +289,7 @@ public class FileManager implements IFileManager {
         return result;
     }
 
-    public MyFileObserver registerObserver(Handler handler,String target,String absolutePath){
+    public DSMFileNode registerObserver(Handler handler,String target,String absolutePath){
         return registerObserver(target,absolutePath,handler,null);
     }
 
@@ -297,19 +298,19 @@ public class FileManager implements IFileManager {
      * @param
      * @param target:
      * */
-    public MyFileObserver registerObserver(String target,String absolutePath,Handler handler,String fatherPath){
-        MyFileObserver observer= mObservers.get(absolutePath);
+    public DSMFileNode registerObserver(String target,String absolutePath,Handler handler,String fatherPath){
+        DSMFileNode observer= mFileNodes.get(absolutePath);
         if(observer != null){		//已经存在监视该路径的observer
             observer.addTarget(target,handler);
             if((fatherPath != null) && (!observer.hasFather()))
-                observer.setFather(mObservers.get(fatherPath));
+                observer.setFather(mFileNodes.get(fatherPath));
         }
         else{									//不存在监视该路径的observer，不应该发生。。
 			/*
 			if(fatherPath != null)
-				observer = new MyFileObserver(absolutePath,target,handler,globalMsgHandler,this,mObservers.get(fatherPath));
+				observer = new DSMFileNode(absolutePath,target,handler,globalMsgHandler,this,mObservers.get(fatherPath));
 			else
-				observer = new MyFileObserver(absolutePath,target,handler,globalMsgHandler,this,null);
+				observer = new DSMFileNode(absolutePath,target,handler,globalMsgHandler,this,null);
 			mObservers.put(absolutePath, observer);*/
         }
         File file = new File(absolutePath);
@@ -331,24 +332,24 @@ public class FileManager implements IFileManager {
      * @param path
      */
     public void withdrowObserver(String target,String path){
-        MyFileObserver observer = mObservers.get(path);
+        DSMFileNode observer = mFileNodes.get(path);
         moveTarget(target,observer);
     }
 
     public void deleteObserver(String path) {
         // TODO Auto-generated method stub
-        MyFileObserver observer = mObservers.get(path);
+        DSMFileNode observer = mFileNodes.get(path);
         if(observer != null){
             moveObserver(observer);
         }
     }
 
     public void updateObserverMap(String path,String newPath){
-        MyFileObserver observer = mObservers.get(path);
+        DSMFileNode observer = mFileNodes.get(path);
         if(observer != null){
-            mObservers.remove(path);
-            MyFileObserver newObserver = mObservers.get(newPath);
-            if(newObserver == null) mObservers.put(newPath, observer);
+            mFileNodes.remove(path);
+            DSMFileNode newObserver = mFileNodes.get(newPath);
+            if(newObserver == null) mFileNodes.put(newPath, observer);
             else{
                 //TODO
                 HashMap<String,Handler> map = observer.getTargetsAll();
@@ -363,7 +364,7 @@ public class FileManager implements IFileManager {
      * 修改observer的路径，在重命名以及移动文件时调用
      */
     public void modifyObserverPath(String path,String newPath){
-        MyFileObserver observer = mObservers.get(path);
+        DSMFileNode observer = mFileNodes.get(path);
         if(observer != null){
             //从mObservers中删除路径为path的observer
             String parentPath = path.substring(0, path.lastIndexOf("/"));
@@ -373,12 +374,12 @@ public class FileManager implements IFileManager {
                 System.out.println("----FileManager----observer has modifyPath,newPath is : " + newPath);
             }
             else{								//父目录不同，树结构发生变化
-                MyFileObserver parent = mObservers.get(parentPath);
+                DSMFileNode parent = mFileNodes.get(parentPath);
                 if(parent != null){
                     parent.deleteChildObserver(observer);
                     observer.setFather(null);
                 }
-                MyFileObserver newParent = mObservers.get(newParentPath);
+                DSMFileNode newParent = mFileNodes.get(newParentPath);
                 if(newParent != null){
                     observer.setFather(newParent);
                     newParent.addChildObserver(observer);
@@ -392,42 +393,42 @@ public class FileManager implements IFileManager {
 
 
     private void moveObserver(String path){			//对路径为path的observer，将其从监控中移除
-        MyFileObserver observer = mObservers.get(path);
+        DSMFileNode observer = mFileNodes.get(path);
         moveObserver(observer);
     }
 
-    private void moveObserver(MyFileObserver observer){
+    private void moveObserver(DSMFileNode observer){
         if(observer != null){
-            for (MyFileObserver o : observer.getChildAll()) {
+            for (DSMFileNode o : observer.getChildAll()) {
                 moveObserver(o);
             }
-            MyFileObserver father = observer.getFather();
+            DSMFileNode father = observer.getFather();
             if(father != null){
                 father.deleteChildObserver(observer);
             }
             observer.stopWatching();
-            mObservers.remove(observer.getPath());
+            mFileNodes.remove(observer.getPath());
         }
     }
 
-    private void moveTarget(String target,MyFileObserver observer){
+    private void moveTarget(String target,DSMFileNode observer){
         if(observer != null){
             observer.deleteTarget(target);
             if(observer.hasChild()){
-                List <MyFileObserver> list = observer.getChildAll();
-                for(MyFileObserver fo:list){
+                List <DSMFileNode> list = observer.getChildAll();
+                for(DSMFileNode fo:list){
                     moveTarget(target,fo);
                 }
             }
 			/*
 			if(!observer.hasTarget()){
-				MyFileObserver father = observer.getFather();
+				DSMFileNode father = observer.getFather();
 				if(father != null){
 					father.deleteChildObserver(observer);
 				}
 				if(observer.hasChild()){
-					List <MyFileObserver> list = observer.getChildAll();
-					for(MyFileObserver fo:list){
+					List <DSMFileNode> list = observer.getChildAll();
+					for(DSMFileNode fo:list){
 						fo.setFather(null);
 						moveTarget(target,fo);
 					}
@@ -439,13 +440,13 @@ public class FileManager implements IFileManager {
 
     }
 
-    public MyFileObserver getMyFileObserver(String path){
-        return mObservers.get(path);
+    public DSMFileNode getDSMFileNode(String path){
+        return mFileNodes.get(path);
     }
 
     //创建新的文件，其路径为path
     private boolean createFile(String path){
-        MyFileObserver observer = mObservers.get(path);
+        DSMFileNode observer = mFileNodes.get(path);
         if(observer != null){
             //已经存在该文件，创建失败
             return false;
@@ -469,10 +470,10 @@ public class FileManager implements IFileManager {
 
     }
 
-    private void addDirectory(String path,MyFileObserver fatherObserver){
+    private void addDirectory(String path,DSMFileNode fatherObserver){
         registerObserver(localDeviceId,path,fatherObserver.getPath());
 		/*
-		MyFileObserver observer = new MyFileObserver(path,localDeviceId,globalMsgHandler,this,fatherObserver);
+		DSMFileNode observer = new DSMFileNode(path,localDeviceId,globalMsgHandler,this,fatherObserver);
 		mObservers.put(path, observer);
 		File file = new File(path);
 		if(file.isDirectory()){
@@ -494,7 +495,7 @@ public class FileManager implements IFileManager {
         return path.substring(0, index);
     }
 
-    private boolean dispenseMessage(int result, MyFileObserver o,String s){
+    private boolean dispenseMessage(int result, DSMFileNode o,String s){
         if(!dispenseMsgTag){
             System.out.println("----FileManager----dispenseMessage----dispenseMsgTag is false");
             return false;
@@ -512,7 +513,7 @@ public class FileManager implements IFileManager {
         else return false;
     }
 
-    private boolean dispenseMessage(int result,MyFileObserver o1,MyFileObserver o2,String s1,String s2){
+    private boolean dispenseMessage(int result,DSMFileNode o1,DSMFileNode o2,String s1,String s2){
         if(!dispenseMsgTag) return false;
         if(o1 != null && o2 != null){
             HashMap<String,Handler> targets1 = o1.getTargetsAll();
@@ -584,7 +585,7 @@ public class FileManager implements IFileManager {
                 //更新版本信息
             }
             else{			//不是cache目录下的文件得到了修改
-                MyFileObserver ob = getMyFileObserver(path);
+                DSMFileNode ob = getDSMFileNode(path);
                 if(ob == null){		//文件未存在
                     //System.out.println("----FileManager----HandleFileModifiedMsg:file not exists,create file observer");
                     createFile(path);
@@ -605,7 +606,7 @@ public class FileManager implements IFileManager {
                         return;
                     }
                 }
-                dispenseMessage(result,getMyFileObserver(path),path);
+                dispenseMessage(result, getDSMFileNode(path),path);
             }
         }
 
@@ -618,7 +619,7 @@ public class FileManager implements IFileManager {
             else{			//有文件移入，且不是cache文件夹
 
                 if(createFile(path)){
-                    dispenseMessage(result,getMyFileObserver(path),path);
+                    dispenseMessage(result, getDSMFileNode(path),path);
                 }
             }
         }
@@ -630,7 +631,7 @@ public class FileManager implements IFileManager {
             }
             else{
                 createDir(path);
-                dispenseMessage(result,getMyFileObserver(path),path);
+                dispenseMessage(result, getDSMFileNode(path),path);
             }
         }
 
@@ -643,7 +644,7 @@ public class FileManager implements IFileManager {
                 deleteFile(path);
             }
             else{
-                dispenseMessage(result,getMyFileObserver(path),path);
+                dispenseMessage(result, getDSMFileNode(path),path);
                 deleteFile(path);
             }
         }
@@ -680,8 +681,8 @@ public class FileManager implements IFileManager {
                 modifyObserverPath(oldPath,newPath);
                 String oldFatherPath = getFatherPath(oldPath);
                 String newFatherPath = getFatherPath(newPath);
-                MyFileObserver ob1 = getMyFileObserver(oldFatherPath);
-                MyFileObserver ob2 = getMyFileObserver(newFatherPath);
+                DSMFileNode ob1 = getDSMFileNode(oldFatherPath);
+                DSMFileNode ob2 = getDSMFileNode(newFatherPath);
                 dispenseMessage(result,ob1,ob2,oldPath,newPath);
             }
         }
@@ -700,7 +701,7 @@ public class FileManager implements IFileManager {
                 deleteFile(path);
             }
             else{
-                MyFileObserver ob = getMyFileObserver(path);
+                DSMFileNode ob = getDSMFileNode(path);
                 dispenseMessage(result,ob,path);
                 deleteFile(path);
             }
@@ -720,9 +721,9 @@ public class FileManager implements IFileManager {
                 //TODO
             }
             else{
-                MyFileObserver ob = getMyFileObserver(getFatherPath(path));
+                DSMFileNode ob = getDSMFileNode(getFatherPath(path));
 
-                if(getMyFileObserver(path) == null){ 		//文件本来不存在于监视目录下
+                if(getDSMFileNode(path) == null){ 		//文件本来不存在于监视目录下
                     addDirectory(path,ob);
                 }
                 dispenseMessage(result,ob,path);
@@ -733,7 +734,7 @@ public class FileManager implements IFileManager {
          *
          */
         private void handleCoverFileMsg(String path,int result){
-            MyFileObserver ob = getMyFileObserver(path);
+            DSMFileNode ob = getDSMFileNode(path);
             if(ob != null){
                 ob.stopWatching();		//停止当前的监听
                 ob.startWatching();		//重新开始监听
@@ -751,7 +752,7 @@ public class FileManager implements IFileManager {
                 else{	//修改时间没变化，说明只是打开了，但内容未修改
                     return;
                 }
-                dispenseMessage(result,getMyFileObserver(path),path);
+                dispenseMessage(result, getDSMFileNode(path),path);
             }
         }
 
@@ -770,7 +771,8 @@ public class FileManager implements IFileManager {
                 case IEventTranslate.FILEMODIFIED:{				//文件被修改，将消息发送到共享该文件的对象.
                     //System.out.println(path + " has been modified");
                     System.out.println("----FileManager----FileModified");
-                    handleFileModifiedMsg(path,result);
+                    Log.i("Test",path +" modify detected");
+                    handleFileModifiedMsg(path, result);
                 }break;
 
                 case IEventTranslate.FILEMOVETO:{			//有新文件移动到了受监控的文件夹中，需要发送文件并为该文件添加observer

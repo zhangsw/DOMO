@@ -12,6 +12,7 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 
+import com.example.zhangsw.sharefile.FileSystem.DSMFileNode;
 import com.example.zhangsw.sharefile.MemoryManager.MemoryManager;
 import com.example.zhangsw.sharefile.Util.FileConstant;
 import com.example.zhangsw.sharefile.Util.FileOperateHelper;
@@ -27,7 +28,6 @@ public class SharedMem extends Service implements ConnectionChangeCallBack{
 
 	private MemoryManager memManager;
 	private String localID;
-	private List fileList;
 	private String path;
 	
 	private MyBinder myBinder = new MyBinder();
@@ -65,8 +65,11 @@ public class SharedMem extends Service implements ConnectionChangeCallBack{
 		// TODO Auto-generated method stub
 		super.onDestroy();
 		unregisterReceiver(mConChangeReceiver);
-		memManager.stop();
+        if(memManager != null)
+		    memManager.stop();
 	}
+
+
 	
 	/**
 	 * 本地设备的wifi被关闭了
@@ -96,15 +99,7 @@ public class SharedMem extends Service implements ConnectionChangeCallBack{
 		//wifi已经断开了当前连接，网络不可用
 		networkDisabled();
 	}
-	
-	
-	public void readFile(String filename,String filePath){
-		File file = new File(filePath);
-	}
-	
-	public void writeFile(String filename){
-		
-	}
+
 
     public String getSharedPath(){
         return path;
@@ -150,7 +145,7 @@ public class SharedMem extends Service implements ConnectionChangeCallBack{
                 +(ipAddress>>16 & 0xff)+"."+(ipAddress>>24 & 0xff));  
 	}
 
-	public class MyBinder extends Binder{
+    public class MyBinder extends Binder implements DsmOperator{
 		public SharedMem getService(){
 			return SharedMem.this;
 		}
@@ -180,9 +175,18 @@ public class SharedMem extends Service implements ConnectionChangeCallBack{
 				return false;
 			}
 		}
-		
-		
-	}
+
+
+        @Override
+        public DSMFileNode read(String filePath) {
+            return memManager.read(filePath);
+        }
+
+        @Override
+        public void write(String filePath, String content) {
+            memManager.write(filePath,content);
+        }
+    }
 	
 	
 	

@@ -1,11 +1,24 @@
 package com.example.zhangsw.sharefile.Util;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class FileOperateHelper {
 
 	
-	
+	public static boolean writeApend(String path,String content){
+        try {
+            FileWriter fw = new FileWriter(path,true);
+            fw.write(content);
+            fw.flush();
+            fw.close();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 	//�ļ��Ƿ����
 	public static boolean fileExist(String path){
         File file = new File(path);

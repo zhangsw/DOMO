@@ -4,15 +4,17 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 import com.example.zhangsw.sharefile.Conflict.ConflictManager;
+import com.example.zhangsw.sharefile.FileSystem.DSMFileNode;
 import com.example.zhangsw.sharefile.FileSystem.FileManager;
 import com.example.zhangsw.sharefile.FileSystem.FileMetaData;
-import com.example.zhangsw.sharefile.FileSystem.MyFileObserver;
 import com.example.zhangsw.sharefile.FileSystem.VectorClock;
 import com.example.zhangsw.sharefile.FileSystem.VersionManager;
 import com.example.zhangsw.sharefile.Log.DebugLog;
 import com.example.zhangsw.sharefile.LogLine.LogLine;
+import com.example.zhangsw.sharefile.ShareFileService.DsmOperator;
 import com.example.zhangsw.sharefile.Storage.StorageOperator;
 import com.example.zhangsw.sharefile.Util.FileConstant;
 import com.example.zhangsw.sharefile.Util.FileOperateHelper;
@@ -37,7 +39,7 @@ import java.util.Map.Entry;
  * @author zhangsw
  *
  */
-public class MemoryManager implements IMemoryManager{
+public class MemoryManager implements IMemoryManager,DsmOperator{
 
 	private LogLine logLine;
 	private String defaultRootPath;		//默认路径，即存放共享文件的文件夹路径
@@ -115,20 +117,20 @@ public class MemoryManager implements IMemoryManager{
 	 * @param tag	标记
 	 */
 	private void sendFileVersion(String target,String relativePath,String tag){
-		MyFileObserver ob = fileManager.getMyFileObserver(defaultRootPath + relativePath);
+		DSMFileNode ob = fileManager.getDSMFileNode(defaultRootPath + relativePath);
 		if(ob != null){
 			System.out.println("before logline sendFileVectorClock");
 			logLine.sendFileVersion(target, ob.getFileMetaData(), ob.getVectorClock(), relativePath,tag);
 		}
 	}
 	
-	private void sendFileVersion(String target, MyFileObserver m, String tag){
+	private void sendFileVersion(String target, DSMFileNode m, String tag){
 		String relativePath = m.getPath().substring(defaultRootPath.length());
 		logLine.sendFileVersion(target, m.getFileMetaData(), m.getVectorClock(), relativePath, tag);
 	
 	}
 	
-//	private void sendFileVectorClock(String target,MyFileObserver ob,String tag){
+//	private void sendFileVectorClock(String target,DSMFileNode ob,String tag){
 //		if(ob != null){
 //			logLine.sendFileVectorClock(target, ob.getFileMetaData().getFileID(), ob.getVectorClock(), ob.getFileMetaData().getRelativePath(), tag);
 //		}
@@ -172,7 +174,7 @@ public class MemoryManager implements IMemoryManager{
 				//修改远端发过来的map中自己的版本号
 				remoteVectorClock.put(localDeviceId, localVectorClock.getVersionNumber(localDeviceId));
 				//将修改的VectorClock转发到其他设备
-				List<String>targets = fileManager.getMyFileObserver(path).getTargetsList();
+				List<String>targets = fileManager.getDSMFileNode(path).getTargetsList();
 				//转发VectorClock
 				//forwardVectorClock(targets,target,fileID,remoteVectorClock,relativePath);
 				//向target请求该文件
@@ -199,7 +201,7 @@ public class MemoryManager implements IMemoryManager{
 					//修改远端发过来的map中自己的版本号
 					remoteVectorClock.put(localDeviceId, VersionManager.FILENOTEXIST);
 					//将修改的VectorClock转发到其他设备
-					List<String>targets = fileManager.getMyFileObserver(path).getTargetsList();
+					List<String>targets = fileManager.getDSMFileNode(path).getTargetsList();
 					//转发VectorClock
 					//forwardVectorClock(targets,target,fileID,remoteVectorClock,relativePath);
 					//向target请求该文件
@@ -263,7 +265,7 @@ public class MemoryManager implements IMemoryManager{
 					//修改远端发过来的map中自己的版本号
 					remoteVectorClock.put(localDeviceId, VersionManager.FILENOTEXIST);
 					//将修改的VectorClock转发到其他设备
-					List<String>targets = fileManager.getMyFileObserver(path).getTargetsList();
+					List<String>targets = fileManager.getDSMFileNode(path).getTargetsList();
 					//转发VectorClock
 					//forwardVectorClock(targets,target,fileID,remoteVectorClock,relativePath);
 					 * 
@@ -307,7 +309,7 @@ public class MemoryManager implements IMemoryManager{
 		if(fileManager.fileObserverExist(defaultRootPath + relativePath)){
 			//已经存在observer
 			
-			MyFileObserver ob = fileManager.getMyFileObserver(defaultRootPath + relativePath);
+			DSMFileNode ob = fileManager.getDSMFileNode(defaultRootPath + relativePath);
 			if(fileMetaData.equals(ob.getFileMetaData())){	//本地保存的文件同收到的文件是相同的，即是冗余数据，不需要
 				file.delete();
 				System.out.println("File redundancy");
@@ -338,7 +340,7 @@ public class MemoryManager implements IMemoryManager{
 				System.out.println("----MemoryManager----receive conflictFile");
 				conflictManager.receiveConflictFileData(target, fileMetaData, file);
 				//发送本地收到文件通知
-				//sendFileUpdateInform(fileManager.getMyFileObserver(defaultRootPath + relativePath).getTargetsList(),fileMetaData);
+				//sendFileUpdateInform(fileManager.getDSMFileNode(defaultRootPath + relativePath).getTargetsList(),fileMetaData);
 				
 			}
 			else{	
@@ -346,7 +348,7 @@ public class MemoryManager implements IMemoryManager{
 				/*
 				boolean success = fileManager.createEmptyFileNode(defaultRootPath + fileMetaData.getRelativePath(), fileMetaData.getFileID());
 				if(success){
-					MyFileObserver ob = fileManager.getMyFileObserver(defaultRootPath + relativePath);
+					DSMFileNode ob = fileManager.getDSMFileNode(defaultRootPath + relativePath);
 					ob.setFileMetaData(fileMetaData);
 					ob.updateVersionNumber(target, fileMetaData.getVersionID());
 					ob.updateVersionNumber(localDeviceId, fileMetaData.getVersionID());
@@ -377,12 +379,12 @@ public class MemoryManager implements IMemoryManager{
 		String absolutePath = defaultRootPath + fileMetaData.getRelativePath();
 		if(fileManager.fileObserverExist(absolutePath)){	//本地存在该文件的结点
 			System.out.println("local has file node");
-			FileMetaData localMetaData = fileManager.getMyFileObserver(absolutePath).getFileMetaData();
+			FileMetaData localMetaData = fileManager.getDSMFileNode(absolutePath).getFileMetaData();
 			System.out.println("local: " + localMetaData.getFileSize() +", " + localMetaData.getFileID() + "," +localMetaData.getRelativePath() +", "+ localMetaData.getVersionID() +", "+localMetaData.getModifiedTime());
 			System.out.println("remote: "+ fileMetaData.getFileSize() + ", " + fileMetaData.getFileID() + ","+fileMetaData.getRelativePath() + ", "+ fileMetaData.getVersionID() + ", " +fileMetaData.getModifiedTime());
 			if(localMetaData.equals(fileMetaData)){
 				System.out.println("metaData is the same");
-				fileManager.getMyFileObserver(absolutePath).updateVectorClock(target, fileMetaData.getVersionID());
+				fileManager.getDSMFileNode(absolutePath).updateVectorClock(target, fileMetaData.getVersionID());
 			}
 			else{
 				//TODO
@@ -424,12 +426,14 @@ public class MemoryManager implements IMemoryManager{
 		// TODO Auto-generated method stub
 		int index = getIndexByName(target);
 		System.out.println("enter receiveAskFile,absolutePath is " + absolutePath);
+        Log.i("Test","receive ask " + absolutePath);
 		if(index != -1){
 			File file = new File(absolutePath);
 			if(file.exists()){				//存在请求的文件，可以进行发送
 				//TODO
 				System.out.println("----MemoryManager----file exist，before send");
 				sendFile(target,absolutePath,relativePath);			//文件路径？？？
+
 				return true;
 			}
 			else{										//不存在请求的文件
@@ -437,7 +441,7 @@ public class MemoryManager implements IMemoryManager{
 				if(conflictManager.conflictFileNodeExist(absolutePath)){	//请求的是冲突文件
 					//发送冲突文件
 					
-					MyFileObserver ob = conflictManager.getConflictFileNode(absolutePath).getLocalFileObserver();
+					DSMFileNode ob = conflictManager.getConflictFileNode(absolutePath).getLocalFileObserver();
 					System.out.println("----MemoryManager----ask conflictFile,relativePath is:" + ob.getFileMetaData().getRelativePath());
 					sendFile(target,ob.getPath(),ob.getFileMetaData().getRelativePath());
 					return true;
@@ -463,7 +467,8 @@ public class MemoryManager implements IMemoryManager{
         }
 		else return false;
 	}
-	
+
+
 	
 	 
 	private void sendFileUpdateInform(List<String> targets,FileMetaData fileMetaData){
@@ -478,8 +483,8 @@ public class MemoryManager implements IMemoryManager{
 	 * @param relativeFilePath
 	 */
 	private void sendFile(String target,String absolutePath,String relativeFilePath){
+        Log.i("Test",absolutePath +" data will be sent");
 		logLine.sendFile(target, fileManager.getFileMetaData(absolutePath),absolutePath);
-		
 	}
 	
 	private void deleteFile(String target,String relativeFilePath){
@@ -687,11 +692,11 @@ public class MemoryManager implements IMemoryManager{
 			ShareInfo s = shareInfList.get(index);
 			String path = s.getSharedFilePath();
 			System.out.println("----MemoryManager---share path is :" + path);
-			MyFileObserver m = fileManager.getMyFileObserver(path);
+			DSMFileNode m = fileManager.getDSMFileNode(path);
 			if(path.equals(defaultRootPath)){
 				//共享的默认路径，需要排除。cache文件夹
 				if(m.hasChild()){
-					ArrayList<MyFileObserver> list = m.getChildAll();
+					ArrayList<DSMFileNode> list = m.getChildAll();
 					for(int i=0;i<list.size();i++){
 						System.out.println(list.get(i).getPath());
 						if(!list.get(i).getPath().equals(FileConstant.DEFAULTSAVEPATH))
@@ -700,7 +705,7 @@ public class MemoryManager implements IMemoryManager{
 				}
 			}
 			else if(m.hasChild()){
-				List<MyFileObserver> list = m.getChildAll();
+				List<DSMFileNode> list = m.getChildAll();
 				for(int i=0;i<list.size();i++){
 					synchronizeFiles(target,list.get(i));
 				}
@@ -711,14 +716,14 @@ public class MemoryManager implements IMemoryManager{
 	/**
 	 * 
 	 */
-	private void synchronizeFiles(String target,MyFileObserver m){
+	private void synchronizeFiles(String target,DSMFileNode m){
 		if(m != null){
 			String path = m.getPath();
 			if(FileOperateHelper.isDirectory(path)){
 				//文件夹
 				makeDir(target,m.getFileMetaData().getRelativePath());
 				if(m.hasChild()){
-					ArrayList<MyFileObserver> list = m.getChildAll();
+					ArrayList<DSMFileNode> list = m.getChildAll();
 					for(int i=0;i<list.size();i++){
 						synchronizeFiles(target,list.get(i));
 					}
@@ -785,7 +790,7 @@ public class MemoryManager implements IMemoryManager{
 			BufferedWriter bw;
 			try {
 				bw = new BufferedWriter(new FileWriter(file));
-				MyFileObserver mo= fileManager.getMyFileObserver(path);
+				DSMFileNode mo= fileManager.getDSMFileNode(path);
 				if(mo != null){
 					saveVersionNumber(bw,mo,target);
 				}
@@ -806,7 +811,7 @@ public class MemoryManager implements IMemoryManager{
 		BufferedWriter bw;
 		try {
 			bw = new BufferedWriter(new FileWriter(file));
-			MyFileObserver mo= fileManager.getMyFileObserver(path);
+			DSMFileNode mo= fileManager.getDSMFileNode(path);
 			if(mo != null){
 				saveVersionNumber(bw,mo,si.getTarget());
 			}
@@ -819,13 +824,13 @@ public class MemoryManager implements IMemoryManager{
 		}
 	}
 	
-	private void saveVersionNumber(BufferedWriter bw,MyFileObserver mo,String target) throws IOException{
+	private void saveVersionNumber(BufferedWriter bw,DSMFileNode mo,String target) throws IOException{
 		//TODO
 		int versionNumber = mo.getVersionNumber(target);
 		StorageOperator.writeVersionNumber(bw, mo.getPath(), versionNumber);
 		if(mo.hasChild()){
 			
-			ArrayList<MyFileObserver> list = mo.getChildAll();
+			ArrayList<DSMFileNode> list = mo.getChildAll();
 			//System.out.println(mo.getPath()+" has child,number is " + list.size());
 			for(int i=0;i<list.size();i++){
 				System.out.println(list.get(i).getPath());
@@ -843,10 +848,20 @@ public class MemoryManager implements IMemoryManager{
 		}
 		return -1;
 	}
-	
-	
-	
-	private class FileTranHandler extends Handler{
+
+    @Override
+    public DSMFileNode read(String filePath) {
+        return fileManager.getDSMFileNode(filePath);
+    }
+
+    @Override
+    public void write(String filePath,String content) {
+        FileOperateHelper.writeApend(filePath,content);
+        Log.i("Test", filePath + " has been modified");
+    }
+
+
+    private class FileTranHandler extends Handler{
 		
 		public FileTranHandler(Looper looper){
 			super(looper);
@@ -922,9 +937,4 @@ public class MemoryManager implements IMemoryManager{
 		fileManager.renameLocalFile(oldRelativePath, newRelativePath);
 	}
 
-	
-
-	
-
-		
 }
