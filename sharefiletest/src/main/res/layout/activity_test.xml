@@ -28,10 +28,39 @@
                 android:text="@string/test_multiple_file_button_text"
                 android:id="@+id/test_multiple_button"
                 android:onClick="multipleFileTestBtOnClick"
-                android:layout_marginTop="73dp"
                 android:layout_below="@+id/test_single_button"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true" />
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/test_multiple_button">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="files number"
+                    android:id="@+id/textView2" />
+
+                <EditText
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:ems="10"
+                    android:id="@+id/file_number_edit"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="init"
+                    android:id="@+id/button"
+                    android:onClick="initBtOnClick" />
+            </LinearLayout>
 
         </RelativeLayout>
 

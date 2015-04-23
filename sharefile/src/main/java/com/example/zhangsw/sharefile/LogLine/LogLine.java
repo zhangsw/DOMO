@@ -355,7 +355,10 @@ public class LogLine {
         if(index != -1){
             DevicesInf di = devices.get(index);
             memoryManager.receiveSynReady(di.getName());
-
+        }
+        else
+        {
+            System.out.println("----logline----receive syn ready---device not existed");
         }
     }
 
@@ -364,7 +367,7 @@ public class LogLine {
         return true;
     }
 
-    public synchronized  void addDevice(String name, String ip, int style){
+    public  void addDevice(String name, String ip, int style){
         System.out.println("enter logline addDevice---");
         DevicesInf temp = new DevicesInf(name,ip,style);
         if(!devices.contains(temp)){

@@ -1,5 +1,7 @@
 package com.example.zhangsw.sharefile.Util;
 
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,6 +14,7 @@ public class FileOperateHelper {
             FileWriter fw = new FileWriter(path,true);
             fw.write(content);
             fw.flush();
+            Log.i("Test", path + " has been modified");
             fw.close();
             return true;
         } catch (IOException e) {

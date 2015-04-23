@@ -52,7 +52,9 @@ public class PsyTcpServer{
                             psyline.removeSocket(si);
                         }
                         SocketIO si = new SocketIO(ip,socket,1,psyline);
+                        System.out.println("----PsyTcpServer----before excute socketIO");
                         executorServiceSo.execute(si);
+                        System.out.println("----PsyTcpServer-after excute socketIO");
                         psyline.addSocket(si);
 							/*
 							Responser res = new Responser(socket,psyline);

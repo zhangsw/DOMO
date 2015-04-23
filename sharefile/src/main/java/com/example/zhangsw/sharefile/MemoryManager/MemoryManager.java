@@ -572,9 +572,8 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 	
 	
 	public synchronized void addShareDevice(String sharedFilePath,String target,int type){
-		System.out.println("SharedFilePath is"+sharedFilePath+",target is "+target);
+		System.out.println("----MemoryManager----SharedFilePath is"+sharedFilePath+",target is "+target);
 		ShareInfo si = new ShareInfo(sharedFilePath,target,type,handler,fileManager);
-		System.out.println("enter Consistency addShareDevice-----");
 		//TODO
 		if(!shareInfList.contains(si)){						//不能如此简单的判断！！！
 			System.out.println("----MemoryManager----shareInfo not existed,add it");
@@ -857,7 +856,7 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
     @Override
     public void write(String filePath,String content) {
         FileOperateHelper.writeApend(filePath,content);
-        Log.i("Test", filePath + " has been modified");
+
     }
 
 
@@ -878,13 +877,13 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
                 Date date = new Date();
                 DebugLog.d(mo.getRelativeFilepath() + ":send file message:"+FileUtil.getTimeFromLong(date.getTime()));
 				sendFileVersion(mo.getTarget(),mo.getRelativeFilepath(),vectorClock);
-				
+                Log.i("Test", mo.getRelativeFilepath() + " version will be sent");
 				//sendFile(mo.getTarget(),mo.getFilepath(),mo.getRelativeFilepath());
 				
 			}break;
 			
 			case FileConstant.DELETEFILEMESSAGE:{									//删除文件
-				System.out.println("-----deletefilemessage----");
+				System.out.println("-----deletefilemessage----" + mo.getRelativeFilepath());
 				deleteFile(mo.getTarget(),mo.getRelativeFilepath());
 				
 			}break;

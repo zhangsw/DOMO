@@ -7,6 +7,7 @@ import com.example.zhangsw.sharefile.Util.FileConstant;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -49,7 +50,6 @@ public class PsyLine extends Observable implements FileTransfer,FileTransferCall
 
     /**
      * 同之前连接的设备重新建立连接
-     * @param localIP
      */
     public void reconnectAll(){
         psyTcpServer.serverState();
@@ -80,10 +80,16 @@ public class PsyLine extends Observable implements FileTransfer,FileTransferCall
     }
 
     public synchronized  void addSocket(SocketIO si){
+        System.out.println("----psyline---add socket");
         int index = getIndexByTargetID(si.getTargetID());
         if(index == -1){				//该ip不在连接表中
             socketList.add(si);
-            logline.addDevice(si.getSocket().getInetAddress().getHostName(), si.getTargetID(), 0);
+            System.out.println("----psyline----before ip");
+           // String ip = si.getSocket().getInetAddress().getHostName();
+            String ip = si.getTargetID();
+            System.out.println("----psyline----before id");
+            String id = si.getTargetID();
+            logline.addDevice(ip, id, 0);
             System.out.println("add a device:"+si.getSocket().getInetAddress().getHostName()+"  ip is "+si.getTargetID());
         }
     }

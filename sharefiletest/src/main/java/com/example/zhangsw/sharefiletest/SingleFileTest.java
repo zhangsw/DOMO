@@ -35,6 +35,7 @@ public class SingleFileTest extends Activity {
     private SharedMem SharedMemService;
     private SharedMem.MyBinder serviceBinder;
     boolean mBound;
+    private static int fileNumber = 0;
 
     private ServiceConnection serviceConnection = new ServiceConnection()
     {
@@ -55,12 +56,13 @@ public class SingleFileTest extends Activity {
         }
     };
 
-    private final long MAXOPERATORS = 50;
-    private String filePath = FileConstant.DEFAULTSHAREPATH + "/singleFileTest.txt";
+    private final int MAXOPERATORS = 100;
+    private String filePath = FileConstant.DEFAULTSHAREPATH + "/test";
    // private String logFilePath;
     private int writePercent;
-    private long modifyCount = 0;
-    private long operatorCount = 0;
+    private int modifyCount = 0;
+    private int writeNum = 0;
+    private int operatorCount = 0;
     private EditText et;
 
     private final Timer timer = new Timer();
@@ -85,15 +87,12 @@ public class SingleFileTest extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_single_file_test);
-
         et = (EditText)findViewById(R.id.single_test_editText);
-        File file = new File(filePath);
-        file.deleteOnExit();
-        try {
-            file.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Intent intent = getIntent();
+        fileNumber = intent.getIntExtra("filenumber",0);
+
+
+
     }
 
 
@@ -137,9 +136,12 @@ public class SingleFileTest extends Activity {
 
     public void startBtOnClick(View view){
         if(et.getText().length() > 0) {
+
+           // System.out.println("----SingleFileTest----file number is:" +fileNumber);
             operatorCount = 0;
             modifyCount = 0;
             writePercent = Integer.parseInt(et.getText().toString());
+            writeNum = MAXOPERATORS *writePercent/100;
             TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
@@ -160,20 +162,38 @@ public class SingleFileTest extends Activity {
 
     private void test(){
         Random random = new Random();
-        int result = random.nextInt(100)+1;
+        int result = random.nextInt(fileNumber);
+        String path = filePath+"/"+result+".txt";
         if(operatorCount < MAXOPERATORS){
-            operatorCount++;
-            if(result<=writePercent){
+            if(modifyCount < writeNum){
                 //write file
-                serviceBinder.write(filePath,"abc\n");
-                modifyCount++;
+                if(operatorCount-modifyCount < MAXOPERATORS-writeNum){
+                    int r = random.nextInt(100);
+                    if(r<=writePercent){
+                        serviceBinder.write(path,"abcde\n");
+                        modifyCount++;
+                    }
+                    else{
+                        Log.i("Test", filePath + " read before");
+                        serviceBinder.read(path);
+                        Log.i("Test", filePath + " read after");
+                    }
+                }
+                else {
+                    serviceBinder.write(path, "abcde\n");
+                    modifyCount++;
+                }
             }
             else{
                 //read file
                 Log.i("Test", filePath + " read before");
-                serviceBinder.read(filePath);
+                serviceBinder.read(path);
                 Log.i("Test", filePath + " read after");
             }
+            operatorCount++;
+        }
+        else{
+            Log.i("Test", "Test stop");
         }
     }
 

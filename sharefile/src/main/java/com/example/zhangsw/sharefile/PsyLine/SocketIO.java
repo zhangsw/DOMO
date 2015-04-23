@@ -1,5 +1,7 @@
 package com.example.zhangsw.sharefile.PsyLine;
 
+import android.util.Log;
+
 import com.example.zhangsw.sharefile.FileSystem.FileMetaData;
 import com.example.zhangsw.sharefile.FileSystem.VectorClock;
 import com.example.zhangsw.sharefile.Util.FileConstant;
@@ -168,6 +170,7 @@ public class SocketIO implements Runnable{
             }
            // disfile.close();
             fis.close();
+            Log.i("Test", msg.sArg1 + " data has sended");
            // socketOS.close();
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -204,7 +207,7 @@ public class SocketIO implements Runnable{
 
     }
 
-    private synchronized void sendFileVersion(IOMessage msg){
+    private void sendFileVersion(IOMessage msg){
         try {
             //testConnection();
             Assert.assertNotNull(msg.obj1);
@@ -239,7 +242,7 @@ public class SocketIO implements Runnable{
         }
     }
 
-    private synchronized void sendCommand(IOMessage msg){
+    private void sendCommand(IOMessage msg){
         Assert.assertNotNull(msg.sArg1);
         try {
             //testConnection();
@@ -267,7 +270,7 @@ public class SocketIO implements Runnable{
 
     }
 
-    private synchronized void sendDisconnectMsg(IOMessage msg){
+    private void sendDisconnectMsg(IOMessage msg){
         Assert.assertNotNull(msg.sArg1);
         try {
             //testConnection();
@@ -299,7 +302,7 @@ public class SocketIO implements Runnable{
         }
     }
 
-    private synchronized void sendSynReady(IOMessage msg){
+    private void sendSynReady(IOMessage msg){
         try {
             oos.writeUTF(msg.sArg1);
             oos.flush();

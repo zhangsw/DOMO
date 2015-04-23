@@ -284,7 +284,7 @@ public class DSMFileNode {
         for(DSMFileNode fileObserver: lChildNode)
             if(fileObserver.getPath().equals(childObserver.getPath())) return;
         lChildNode.add(childObserver);
-        //System.out.println("----DSMFileNode----" + path + "add a child observer:" + childObserver.getPath());
+        System.out.println("----DSMFileNode----" + path + "add a child observer:" + childObserver.getPath());
     }
 
     public void deleteChildObserver(String path){

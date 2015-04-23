@@ -224,7 +224,7 @@ public class FileManager implements IFileManager {
         //Assert.assertNull("observer exists when first initialize the observer tree,check it",observer);
 
         if(fatherPath != null){
-            //System.out.println("-----FileManager-----fatherPath is" + fatherPath);
+            System.out.println("-----FileManager-----fatherPath is" + fatherPath);
             DSMFileNode fatherObserver = mFileNodes.get(fatherPath);
             observer = new DSMFileNode(absolutePath,localDeviceId,globalMsgHandler,this,fatherObserver);
             fatherObserver.addChildObserver(observer);
@@ -313,16 +313,18 @@ public class FileManager implements IFileManager {
 				observer = new DSMFileNode(absolutePath,target,handler,globalMsgHandler,this,null);
 			mObservers.put(absolutePath, observer);*/
         }
-        File file = new File(absolutePath);
+
+        /*File file = new File(absolutePath);
         if(file.isDirectory()){
-            File []files = file.listFiles();
-            for(File f:files){		//对子文件递归进行注册
-                if(f.isDirectory())
-                    System.out.println(f.getAbsolutePath()+"------"+f.getParent());
-                assert observer != null;
-                observer.addChildObserver(registerObserver(target,f.getAbsolutePath(),handler,f.getParent()));
-            }
+        File []files = file.listFiles();
+        for(File f:files){		//对子文件递归进行注册
+        if(f.isDirectory())
+        System.out.println(f.getAbsolutePath()+"------"+f.getParent());
+        assert observer != null;
+        observer.addChildObserver(registerObserver(target,f.getAbsolutePath(),handler,f.getParent()));
         }
+        }*/
+
         return observer;
     }
 
