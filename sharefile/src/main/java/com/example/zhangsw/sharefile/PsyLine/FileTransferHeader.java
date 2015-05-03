@@ -58,6 +58,10 @@ public  class FileTransferHeader {
         return FileConstant.ASKFILE + "$PATH$" + relativePath + "\n";
     }
 
+    public static String fetchFileVersionCmd(String relativePath){
+        return FileConstant.ASKFILEVERSION +"$PATH$" +relativePath +"\n";
+    }
+
     public static String makeDirCmd(String relativePath){
         return FileConstant.MAKEDIR + "$PATH$" + relativePath + "\n";
     }

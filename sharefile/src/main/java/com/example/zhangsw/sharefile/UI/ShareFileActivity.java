@@ -38,12 +38,12 @@ public class ShareFileActivity extends Activity {
 	private Button mTestModifyBt;
 	
 	private SharedMem SharedMemService;
-	private Intent serviceIntent;
 	private SharedMem.MyBinder serviceBinder;
 	
 	private WifiManager wifiManager;
 	private WifiInfo wifiInfo;
 	private String serviceName = "android_programe.ShareFile.SharedMem";
+    boolean mBound;
 	private ServiceConnection serviceConnection = new ServiceConnection()
 	{
 		public void onServiceConnected(ComponentName name, IBinder service)
@@ -52,13 +52,14 @@ public class ShareFileActivity extends Activity {
 			serviceBinder = (SharedMem.MyBinder) service;
 			Toast.makeText(ShareFileActivity.this, "Service Connected.", Toast.LENGTH_LONG)
 					.show();
-
+            mBound = true;
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
 			// TODO Auto-generated method stub
 			SharedMemService = null;
 			Toast.makeText(ShareFileActivity.this, "Service failed.", Toast.LENGTH_LONG).show();
+            mBound = false;
 		}
 	};
 	
@@ -79,8 +80,8 @@ public class ShareFileActivity extends Activity {
         
         mTestModifyBt = (Button)findViewById(R.id.test_modify_file_button);
         
-        serviceIntent = new Intent(ShareFileActivity.this,SharedMem.class);
-        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+       // serviceIntent = new Intent(ShareFileActivity.this,SharedMem.class);
+        bindService( new Intent(ShareFileActivity.this,SharedMem.class), serviceConnection, Context.BIND_AUTO_CREATE);
         System.out.println("oncreate ----------1");
         
 
@@ -98,7 +99,8 @@ public class ShareFileActivity extends Activity {
 				// TODO Auto-generated method stub
 		        System.out.println("click ----------1");
 		        //if(!isServiceRunning(serviceName))
-		        	startService(serviceIntent);
+                Intent startServiceIntent = new Intent(ShareFileActivity.this,SharedMem.class);
+		        startService(startServiceIntent);
 				
 		        System.out.println("click ----------2");
 
@@ -109,7 +111,8 @@ public class ShareFileActivity extends Activity {
 			
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				stopService(serviceIntent);
+                Intent stopServiceIntent = new Intent(ShareFileActivity.this,SharedMem.class);
+				stopService(stopServiceIntent);
 			}
 		});
         
@@ -169,14 +172,19 @@ public class ShareFileActivity extends Activity {
 	protected void onStop() {
 		// TODO Auto-generated method stub
 		super.onStop();
-		unbindService(serviceConnection);
+        if(mBound){
+            unbindService(serviceConnection);
+            mBound = false;
+        }
 	}
 
 	@Override
-	protected void onRestart() {
+	protected void onStart() {
 		// TODO Auto-generated method stub
-		super.onRestart();
-		bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+		super.onStart();
+		//bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+        Intent serviceIntent = new Intent(ShareFileActivity.this,SharedMem.class);
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 	}
 
 	private String getLocalAddress(){

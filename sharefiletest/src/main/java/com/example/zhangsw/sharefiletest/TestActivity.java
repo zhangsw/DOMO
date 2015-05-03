@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -99,7 +100,15 @@ public class TestActivity extends Activity {
     }
 
     public void multipleFileTestBtOnClick(View view){
-
+        int num = 0;
+        if(et.getText().toString().length() !=0) {
+           // Log.i("Test","et string is:"+et.getText().toString());
+            num = Integer.parseInt(et.getText().toString());
+        }
+        Intent intent = new Intent();
+        intent.putExtra("filenumber",num);
+        intent.setClass(this,DisconnectTestActivity.class);
+        startActivity(intent);
     }
 
     private void initFile(int num){
@@ -113,6 +122,7 @@ public class TestActivity extends Activity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
         }
     }
 

@@ -32,5 +32,7 @@ public interface FileTransferCallBack {
 
 	public void receiveSynReady(String ip);
 
+    public void receiveAskFileVersion(String ip, String relativePath, String path);
+
 	public void hasDisconnected(String targetID);
 }

@@ -140,6 +140,12 @@ public class Responser implements Runnable{
                                 callBack.receiveAskFile(ip, relativePath, FileConstant.DEFAULTSHAREPATH+relativePath);
                             }break;
 
+                            case FileConstant.ASKFILEVERSION:{
+                                System.out.println("----Responser----receive ask file version-----");
+                                String relativePath = line.substring(line.indexOf("$PATH$")+6, line.length()-1);
+                                callBack.receiveAskFileVersion(ip,relativePath,FileConstant.DEFAULTSHAREPATH +relativePath);
+                            }break;
+
                             case FileConstant.DELETEFILE:{								//接收到的是删除文件信息
                                 System.out.println("receive deletefile-----");
                                 String relativeFilePath = line.substring(line.indexOf("$PATH$")+6, line.length()-1);
@@ -194,6 +200,8 @@ public class Responser implements Runnable{
                             case FileConstant.HEARTBEAT:{
                                 //System.out.println("----Responser----receive heart beat----");
                             }break;
+
+
                             default:{
 
                                 System.out.println("meaningless command:,command's number is " + type);

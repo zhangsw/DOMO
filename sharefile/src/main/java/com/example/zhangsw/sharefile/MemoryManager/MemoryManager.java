@@ -7,6 +7,8 @@ import android.os.Message;
 import android.util.Log;
 
 import com.example.zhangsw.sharefile.Conflict.ConflictManager;
+import com.example.zhangsw.sharefile.Consistency.ConsistencyPolicy;
+import com.example.zhangsw.sharefile.Consistency.PullPolicy;
 import com.example.zhangsw.sharefile.FileSystem.DSMFileNode;
 import com.example.zhangsw.sharefile.FileSystem.FileManager;
 import com.example.zhangsw.sharefile.FileSystem.FileMetaData;
@@ -54,7 +56,8 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 	
 	private static String vectorClock = "one";	//第一次发送VectorClock的标记
 	private static String vectorClockACK = "two";	//已经发送过VectorClock,接收到的是回应，用于判断对方是否已经知道了自己的VectorClock
-	
+
+    private ConsistencyPolicy consistencyPolicy;
 	public MemoryManager(String id) throws IOException{
 		
 		shareInfList = new ArrayList<>();
@@ -72,6 +75,8 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 		conflictManager = new ConflictManager(this,fileManager);
 		
 		readyForSyn = new ArrayList<>();
+
+        consistencyPolicy = new PullPolicy(fileManager,this);
 	}
 	
 	/**
@@ -222,7 +227,7 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 		String path = defaultRootPath + relativePath;
 		VectorClock localVectorClock = fileManager.getVectorClock(path);
 		FileMetaData localMetaData = fileManager.getFileMetaData(path);
-		
+
 		if(localVectorClock != null){	//存在该文件的文件结点
 			//对收到的versinMap进行冲突检测，若需要更新本地的版本号，则进行更新
 			int detectResult = conflictManager.detect(localVectorClock, localDeviceId, remoteVectorClock, target, localMetaData, remoteMetaData);
@@ -230,10 +235,14 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 			if(detectResult == ConflictManager.CONFLICT){
 				//冲突消解
 				if(tag.equals(vectorClock)){	//对方还不知道自己的VectorClock
+                    Log.i("Test", relativePath + " receiveVersion, conflict occurs,before send");
 					sendFileVersion(target,relativePath,vectorClockACK);
 				}
-				conflictManager.resolute(localVectorClock, localDeviceId, remoteVectorClock,target,relativePath,remoteMetaData);
-			}
+                Log.i("Test", relativePath + " before conflict resolute");
+                conflictManager.resolute(localVectorClock, localDeviceId, remoteVectorClock,target,relativePath,remoteMetaData);
+                Log.i("Test", relativePath + " after conclict resolute");
+
+            }
 			// 远端有更新
 			else if(detectResult == ConflictManager.LOCALNEEDUPDATE){
 				//向target请求该文件
@@ -277,6 +286,8 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 				//忽略
 			}
 		}
+
+        Log.i("Test",relativePath + " receive file version");
 		
 		//TODO
 		return true;
@@ -339,7 +350,9 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 				//是按照冲突重命名机制命名的文件
 				System.out.println("----MemoryManager----receive conflictFile");
 				conflictManager.receiveConflictFileData(target, fileMetaData, file);
-				//发送本地收到文件通知
+                Log.i("Test", relativePath + " has receive conflict file, conflict resolute finished ");
+
+                //发送本地收到文件通知
 				//sendFileUpdateInform(fileManager.getDSMFileNode(defaultRootPath + relativePath).getTargetsList(),fileMetaData);
 				
 			}
@@ -366,6 +379,8 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 				}*/
 			}
 		}
+
+        Log.i("Test",file.getAbsolutePath() + " receive file data");
 	}
 	
 	/**
@@ -426,7 +441,7 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 		// TODO Auto-generated method stub
 		int index = getIndexByName(target);
 		System.out.println("enter receiveAskFile,absolutePath is " + absolutePath);
-        Log.i("Test","receive ask " + absolutePath);
+        //Log.i("Test","receive ask " + absolutePath);
 		if(index != -1){
 			File file = new File(absolutePath);
 			if(file.exists()){				//存在请求的文件，可以进行发送
@@ -451,6 +466,17 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 		}
 		return false;
 	}
+
+    public void receiveAskFileVersion(String name, String relativePath, String path) {
+      //  Log.i("Test",path + "receive ask file version");
+        int index = getIndexByName(name);
+        if(index != -1){
+            DSMFileNode fileNode = fileManager.getDSMFileNode(path);
+            if(fileNode != null){
+                sendFileVersion(name,fileNode,vectorClock);
+            }
+        }
+    }
 	
 	public boolean receiveRenameFile(String target, String oldPath, String newPath) {
 		// TODO Auto-generated method stub
@@ -475,6 +501,14 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 		System.out.println("enter memory manager sendFileUpdateInform");
 		logLine.sendFileUpdateInform(targets,fileMetaData);
 	}
+
+    public void fetchFileVersion(String path) {
+        DSMFileNode fileNode = fileManager.getDSMFileNode(path);
+        if(fileNode != null){
+            Log.i("Test",path +" fetch file version");
+            logLine.fetchFileVersion(fileNode.getTargetsList(),fileNode.getFileMetaData().getRelativePath());
+        }
+    }
 	
 	/**
 	 * 发送文件数据，包括了meta data以及concrete data
@@ -850,14 +884,26 @@ public class MemoryManager implements IMemoryManager,DsmOperator{
 
     @Override
     public DSMFileNode read(String filePath) {
-        return fileManager.getDSMFileNode(filePath);
+        consistencyPolicy.readFile(filePath);
+        return  fileManager.getDSMFileNode(filePath);
     }
 
     @Override
     public void write(String filePath,String content) {
-        FileOperateHelper.writeApend(filePath,content);
-
+        //FileOperateHelper.writeApend(filePath,content);
+        consistencyPolicy.append(filePath,content);
     }
+
+    @Override
+    public void updateRemoteVersion(String path,String deviceID){
+        int n = fileManager.getDSMFileNode(path).getVersionNumber(deviceID);
+        fileManager.getDSMFileNode(path).getVectorClock().put(deviceID,n-1);
+    }
+
+    public void setDispenseMsgTag(boolean s){
+        fileManager.setDispenseMsgTag(s);
+    }
+
 
 
     private class FileTranHandler extends Handler{

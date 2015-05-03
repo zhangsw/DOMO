@@ -34,6 +34,9 @@ public class FileConstant {
 
     public static final int HEARTBEAT = 35;
 
+    /**请求文件版本信息*/
+    public static final int ASKFILEVERSION = 36;
+
     /**简单粗暴一致性*/
     public static final int SIMPLECM = 0;
 

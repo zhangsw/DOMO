@@ -50,6 +50,7 @@ public class VectorClock implements Serializable{
         return versionMap.get(deviceId);
     }
 
+
     /**
      * 合并两个versionMap，合并规则利用vector clock
      * @param m

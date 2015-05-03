@@ -176,6 +176,10 @@ public class SharedMem extends Service implements ConnectionChangeCallBack{
 			}
 		}
 
+        public void setDispenseMessage(boolean s){
+            memManager.setDispenseMsgTag(s);
+        }
+
 
         @Override
         public DSMFileNode read(String filePath) {
@@ -186,10 +190,13 @@ public class SharedMem extends Service implements ConnectionChangeCallBack{
         public void write(String filePath, String content) {
             memManager.write(filePath,content);
         }
+
+
+        @Override
+        public void updateRemoteVersion(String path,String deviceID) {
+            memManager.updateRemoteVersion(path,deviceID);
+        }
     }
-	
-	
-	
-	
+
 }
 

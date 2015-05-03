@@ -6,7 +6,7 @@ import com.example.zhangsw.sharefile.FileSystem.DSMFileNode;
  * Created by zhangsw on 2015-04-07.
  * 系统需要提供给外部的接口
  */
-public interface DsmOperator {
+public interface DsmOperator extends OpForTest {
     public DSMFileNode read(String filePath);
 
     /**
@@ -15,4 +15,6 @@ public interface DsmOperator {
      * @param content   追加的文件内容
      */
     public void write(String filePath,String content);
+
+
 }

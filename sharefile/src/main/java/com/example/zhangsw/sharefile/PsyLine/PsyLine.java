@@ -212,6 +212,17 @@ public class PsyLine extends Observable implements FileTransfer,FileTransferCall
         return false;
     }
 
+    public void fetchFileVersion(String id, int style, String relativePath) {
+        switch(style){
+            case 0:{
+                int index = getIndexByTargetID(id);
+                if(index != -1){
+                    socketList.get(index).sendCommand(FileTransferHeader.fetchFileVersionCmd(relativePath));
+                }
+            }break;
+        }
+    }
+
     public boolean sendFileEve(String filePath, String fileName){
         return true;
     }
@@ -238,6 +249,11 @@ public class PsyLine extends Observable implements FileTransfer,FileTransferCall
 
     public boolean receiveAskFile(String targetIp,String relativePath,String absolutePath){
         return logline.receiveAskFile(targetIp,relativePath,absolutePath);
+    }
+
+    @Override
+    public void receiveAskFileVersion(String ip, String relativePath, String path) {
+        logline.receiveaskFileVersion(ip,relativePath,path);
     }
 
     public boolean receiveDeleteFile(String targetIp,String filepath){
@@ -426,6 +442,8 @@ public class PsyLine extends Observable implements FileTransfer,FileTransferCall
     }
 
 
+
+
     public void sendHeartBeat() {
         // TODO Auto-generated method stub
         //System.out.println("----PsyLine----send heart beat");
@@ -442,4 +460,6 @@ public class PsyLine extends Observable implements FileTransfer,FileTransferCall
             socketList.remove(index);
         }
     }
+
+
 }

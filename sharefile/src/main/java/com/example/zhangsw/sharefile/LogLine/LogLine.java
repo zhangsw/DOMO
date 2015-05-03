@@ -171,6 +171,14 @@ public class LogLine {
         return false;
     }
 
+    public void receiveaskFileVersion(String ip, String relativePath, String path) {
+        int index = getIndexByID(ip);
+        if(index != -1){
+            memoryManager.receiveAskFileVersion(devices.get(index).getName(),relativePath,path);
+        }
+
+    }
+
     public boolean receiveRenameFile(String targetIp, String oldPath,String newPath) {
         int index = getIndexByID(targetIp);
         if(index != -1){
@@ -298,6 +306,16 @@ public class LogLine {
         }
         else return false;
 
+    }
+
+    public void fetchFileVersion(List<String>targets,String relativePath){
+        for(int i=0;i<targets.size();++i){
+            int index = getIndexByName(targets.get(i));
+            if(index != -1){
+                DevicesInf di = devices.get(index);
+                psyLine.fetchFileVersion(di.getID(),di.getStyle(),relativePath);
+            }
+        }
     }
 
 	/*
@@ -429,7 +447,6 @@ public class LogLine {
     private void stopHeartBeat(){
         ((HeartBeat)heartBeat).stop();
     }
-
 
 
 

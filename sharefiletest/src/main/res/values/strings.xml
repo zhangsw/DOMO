@@ -8,5 +8,6 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="test_single_file_button_text">Test Single File</string>
     <string name="test_multiple_file_button_text">Test Multiple File</string>
+    <string name="title_activity_disconnect_test">disconnectTestActivity</string>
 
 </resources>

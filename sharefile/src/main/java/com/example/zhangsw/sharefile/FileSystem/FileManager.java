@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class FileManager implements IFileManager {
+public class FileManager implements IFileManager ,FileOperator{
     private HashMap<String,DSMFileNode> mFileNodes;
     private Handler globalMsgHandler;		//全局消息handler,来自各个observer
     private HandlerThread handlerThread;		//全局消息的thread，主要是用来提供looper的。
@@ -284,9 +284,12 @@ public class FileManager implements IFileManager {
      */
     public boolean renameLocalFile(String oldRelativePath,String newRelativePath){
         System.out.println("----FileManager----enter renameLocalFile,oldpath is: " +defaultRootPath + oldRelativePath + ";newPath is:" + defaultRootPath + newRelativePath);
-        boolean result =  FileOperateHelper.renameFile(defaultRootPath + oldRelativePath, defaultRootPath + newRelativePath);
-        if(result) System.out.println("----FileManager----rename successful");
-        return result;
+        FileOperateHelper.renameFile(defaultRootPath + oldRelativePath, defaultRootPath+oldRelativePath+oldVersionSuffix);
+        FileOperateHelper.renameFile(defaultRootPath+oldRelativePath+oldVersionSuffix,defaultRootPath + newRelativePath);
+       // boolean result =  FileOperateHelper.renameFile(defaultRootPath + oldRelativePath, defaultRootPath + newRelativePath);
+        modifyObserverPath(defaultRootPath+oldRelativePath,defaultRootPath + newRelativePath);
+        System.out.println("----FileManager----rename successful");
+        return true;
     }
 
     public DSMFileNode registerObserver(Handler handler,String target,String absolutePath){
@@ -563,6 +566,38 @@ public class FileManager implements IFileManager {
         return false;
     }
 
+    @Override
+    public File readFile(String path) {
+        return null;
+    }
+
+    @Override
+    public FileMetaData readFileMetaData(String path) {
+        return null;
+    }
+
+    @Override
+    public void writeFile(String path, int offset, String content) {
+
+    }
+
+    @Override
+    public void append(String path, String content) {
+        DSMFileNode fileNode = mFileNodes.get(path);
+        if(fileNode != null){
+            FileOperateHelper.writeApend(path,content);
+        }
+    }
+
+    @Override
+    public void delete(String path) {
+
+    }
+
+    @Override
+    public void move(String path, String dest) {
+
+    }
 
 
     /**

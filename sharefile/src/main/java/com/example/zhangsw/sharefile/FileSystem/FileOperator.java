@@ -1,21 +1,17 @@
-package com.example.zhangsw.sharefile.Consistency;
-
-import com.example.zhangsw.sharefile.FileSystem.DSMFileNode;
-import com.example.zhangsw.sharefile.FileSystem.FileMetaData;
+package com.example.zhangsw.sharefile.FileSystem;
 
 import java.io.File;
 
 /**
- * Created by zhangsw on 2015-04-21.
+ * Created by zhangsw on 2015-04-26.
  */
-public interface ConsistencyPolicy {
-
+public interface FileOperator {
     /**
      * 读文件
      * @param path  文件路径
      * @return 文件句柄
      */
-    public void readFile(String path);
+    public File readFile(String path);
 
     /**
      * 读文件的meta data
@@ -34,7 +30,7 @@ public interface ConsistencyPolicy {
 
     public void append(String path, String content);
 
-    public void deleteFile(String path);
+    public void delete(String path);
 
-    public void moveFile(String path,String dest);
+    public void move(String path,String dest);
 }

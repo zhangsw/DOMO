@@ -28,6 +28,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".DisconnectTestActivity"
+            android:label="@string/title_activity_disconnect_test"
+            android:parentActivityName=".TestActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.zhangsw.sharefiletest.TestActivity" />
+        </activity>
     </application>
 
 </manifest>

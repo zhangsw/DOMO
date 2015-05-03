@@ -16,26 +16,31 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.zhangsw.sharefile.Log.DebugLog;
 import com.example.zhangsw.sharefile.ShareFileService.SharedMem;
 import com.example.zhangsw.sharefile.Util.FileConstant;
-import com.example.zhangsw.sharefile.Util.FileUtil;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Date;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class SingleFileTest extends Activity {
+public class DisconnectTestActivity extends Activity {
 
+    private EditText disRateEt;
+    private EditText wRateEt;
     private SharedMem SharedMemService;
     private SharedMem.MyBinder serviceBinder;
     boolean mBound;
     private static int fileNumber = 0;
+    private final int MAXOPERATORS = 100;
+    private String filePath = FileConstant.DEFAULTSHAREPATH + "/test";
+    private int disRate;
+    private int wRate;
+    private int operation;
+    private int modifyCount;
+    private int writeNum;
+    private int conflictNum;
+    private int conflictCount;
 
     private ServiceConnection serviceConnection = new ServiceConnection()
     {
@@ -43,7 +48,7 @@ public class SingleFileTest extends Activity {
         {
             SharedMemService = ((SharedMem.MyBinder) service).getService();
             serviceBinder = (SharedMem.MyBinder) service;
-            Toast.makeText(SingleFileTest.this, "Service Connected.", Toast.LENGTH_LONG)
+            Toast.makeText(DisconnectTestActivity.this, "Service Connected.", Toast.LENGTH_LONG)
                     .show();
             mBound = true;
         }
@@ -51,20 +56,10 @@ public class SingleFileTest extends Activity {
         public void onServiceDisconnected(ComponentName name) {
             // TODO Auto-generated method stub
             SharedMemService = null;
-            Toast.makeText(SingleFileTest.this, "Service failed.", Toast.LENGTH_LONG).show();
+            Toast.makeText(DisconnectTestActivity.this, "Service failed.", Toast.LENGTH_LONG).show();
             mBound = false;
         }
     };
-
-    private final int MAXOPERATORS = 100;
-    private String filePath = FileConstant.DEFAULTSHAREPATH + "/test";
-   // private String logFilePath;
-    private int writePercent;
-    private int modifyCount = 0;
-    private int writeNum = 0;
-    private int operatorCount = 0;
-    private int readNum = 0;
-    private EditText et;
 
     private final Timer timer = new Timer();
     Handler handler = new Handler() {
@@ -87,8 +82,10 @@ public class SingleFileTest extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_single_file_test);
-        et = (EditText)findViewById(R.id.single_test_editText);
+        setContentView(R.layout.activity_disconnect_test);
+     //   Log.i("Test","enter disActivity on create");
+        disRateEt = (EditText)findViewById(R.id.dis_edit1);
+        wRateEt = (EditText)findViewById(R.id.dis_edit2);
         Intent intent = getIntent();
         fileNumber = intent.getIntExtra("filenumber",0);
     }
@@ -97,7 +94,7 @@ public class SingleFileTest extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_single_file_test, menu);
+        getMenuInflater().inflate(R.menu.menu_disconnect_test, menu);
         return true;
     }
 
@@ -112,15 +109,15 @@ public class SingleFileTest extends Activity {
         if (id == R.id.action_settings) {
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Intent serviceIntent = new Intent(SingleFileTest.this,SharedMem.class);
+        Intent serviceIntent = new Intent(DisconnectTestActivity.this,SharedMem.class);
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
     }
 
     @Override
@@ -133,61 +130,67 @@ public class SingleFileTest extends Activity {
     }
 
     public void startBtOnClick(View view){
-        if(et.getText().length() > 0) {
-            serviceBinder.setDispenseMessage(false);
-           // System.out.println("----SingleFileTest----file number is:" +fileNumber);
-            operatorCount = 0;
-            modifyCount = 0;
-            writePercent = Integer.parseInt(et.getText().toString());
-            writeNum = MAXOPERATORS *writePercent/100;
-            readNum = MAXOPERATORS - writeNum;
-           // Log.i("Test","write num is:" + writeNum);
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                    // TODO Auto-generated method stub
-                    Message message = new Message();
-                    message.what = 1;
-                    handler.sendMessage(message);
-                }
-            };
-            timer.schedule(task, 1000, 5000);
-        }
+        operation = 0;
+        modifyCount = 0;
+        conflictCount = 0;
+        disRate = Integer.parseInt(disRateEt.getText().toString());
+        wRate = Integer.parseInt(wRateEt.getText().toString());
+        writeNum = MAXOPERATORS*wRate/100;
+        conflictNum = MAXOPERATORS*wRate*disRate/10000;
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                // TODO Auto-generated method stub
+                Message message = new Message();
+                message.what = 1;
+                handler.sendMessage(message);
+            }
+        };
+        timer.schedule(task, 1000, 5000);
     }
 
     public void stopBtOnClick(View view){
         timer.cancel();
-
     }
 
-    private void test(){
-        Random random = new Random();
-        int result = random.nextInt(fileNumber);
-        String path = filePath+"/"+result+".txt";
-        if(operatorCount < MAXOPERATORS){
-            if(modifyCount < writeNum){
+    private void test() {
+        if (operation < MAXOPERATORS) {
+            String path = filePath + "/" + conflictCount + ".txt";
+            Random random = new Random();
+            if (modifyCount < writeNum) {
                 //write file
-                if(operatorCount-modifyCount < readNum && random.nextInt(100)>=writePercent) {
-                    Log.i("Test", path + " read before");
+                if ((operation - modifyCount < MAXOPERATORS - writeNum) && random.nextInt(100)>wRate) {
+                    Log.i("Test", filePath + " read before");
                     serviceBinder.read(path);
-                    //Log.i("Test", path + " read after");
+                    Log.i("Test", filePath + " read after");
                 }
-                else {
-                    serviceBinder.write(path, "abcde\n");
+                else{
+                    if(conflictCount<conflictNum){
+                        if((modifyCount-conflictCount<writeNum-conflictNum) && random.nextInt(100)>disRate){
+                            serviceBinder.write(path, "abcde\n");
+                        }
+                        else{
+                            serviceBinder.updateRemoteVersion(path, "192.168.1.129");
+                            Log.i("Test", path + "conflict begin");
+                            serviceBinder.write(path, "abcde\n");
+                            conflictCount++;
+
+                        }
+                    }else{
+                        serviceBinder.write(path, "abcde\n");
+                    }
                     modifyCount++;
                 }
-            }
+             }
             else{
-                //read file
-                Log.i("Test", path + " read before");
+                Log.i("Test", filePath + " read before");
                 serviceBinder.read(path);
-               // Log.i("Test", path + " read after");
+                Log.i("Test", filePath + " read after");
             }
-            operatorCount++;
+            operation++;
         }
         else{
-            Log.i("Test", "Test stop");
+            Log.i("Test","stop  test");
         }
     }
-
 }
